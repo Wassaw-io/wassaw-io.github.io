@@ -61,8 +61,37 @@
 
   </div>
 
+  <!-- ============ CASE STUDIES ============ -->
+  <h2>Case studies you can poke at</h2>
+
+  <div class="cards">
+    <a class="card" href="/work/tutoring-retention/">
+      <h3>The churn rate is the wrong number</h3>
+      <p>Survival analysis on student retention, a frailty model for why the churn
+      rate falls when nothing about any student changes, and lifetime value
+      recomputed off the survival curve. Sliders move the assumptions and the
+      decision flips.</p>
+    </a>
+    <a class="card" href="/work/who-to-call/">
+      <h3>Who to call is not who will leave</h3>
+      <p>Targeting retention outreach by churn probability performs worse than
+      random. Uplift modelling on a randomised trial, a Qini curve you can read at
+      any depth, and the intervention cost where targeting starts to pay.</p>
+    </a>
+  </div>
+
+  <p>Both come out of one repository that works the problem end to end: acquisition
+  and funnel, survival and lifetime value, a discrete-time hazard model, causal
+  uplift, seasonal decomposition and forecasting, hierarchical pooling across
+  centers, drift monitoring, and retrieval evaluation. Eight write-ups, 38 tests, and
+  a command-line tool that validates its input before it predicts.</p>
+
+  <p class="note">The data throughout is artificial, for privacy. The analyses are
+  the ones I ran against the real records. Code:
+  <a href="https://github.com/Wassaw-io/tutoring-center-analytics">github.com/Wassaw-io/tutoring-center-analytics</a>.</p>
+
   <!-- ============ EVIDENCE ============ -->
-  <h2>One example</h2>
+  <h2>One more example</h2>
 
   <p>At NASA Wallops Flight Facility I was forecasting local air temperature and modeling the dependence of lightning frequency on local climate change, working in R on data that did not behave the way the textbooks assume. Working through the residuals turned up something that was not a modeling problem at all: a NOAA sensor was malfunctioning. The forecasting work was published with me as first author, and certain results went into a NASA Technical Memorandum.</p>
 
