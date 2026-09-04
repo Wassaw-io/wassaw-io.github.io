@@ -1,0 +1,9 @@
+{
+  "scored_at": "2026-08-30T21:05:22+00:00",
+  "model_name": "logistic",
+  "trained_at": "2026-08-30T21:05:20+00:00",
+  "training_fingerprint": "7e225f6a8220f91c",
+  "scoring_fingerprint": "7e225f6a8220f91c",
+  "active_students": 570,
+  "total_value_at_risk": 215987.03999999998
+}

@@ -1,0 +1,14 @@
+{
+  "lambda": 0.075,
+  "theta": 0.55,
+  "mean_tenure_closed_form": 25.51484808757237,
+  "beta": {
+    "channel_paid": 0.44,
+    "channel_referral": -0.38,
+    "sessions_2_per_week": -0.29,
+    "assessment_gap": 0.11,
+    "first8_attendance": -1.35,
+    "grade_high": 0.26
+  },
+  "individual_lambda_mean": 0.10209600688818914
+}
