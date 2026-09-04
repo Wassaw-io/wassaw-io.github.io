@@ -1,1 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Who to call — Joseph Park</title>
+<meta name="description" content="Targeting a retention programme by churn probability is worse than random. Uplift modelling, a Qini curve you can read, and the intervention cost where targeting starts to pay.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0e10'/%3E%3Ctext x='16' y='23' font-size='20' fill='%238ec7c1' text-anchor='middle' font-family='serif'%3E%E2%88%AB%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/style.css">
+<style>
+.viz { --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+  background:#14171a; border:1px solid var(--border); padding:22px 20px 16px; margin:28px 0; }
+.viz h3 { font-family:var(--serif); font-weight:400; font-size:19px; margin:0 0 4px; }
+.viz .sub { color:var(--muted); font-size:13.5px; margin:0 0 18px; }
+.viz svg { display:block; width:100%; height:auto; overflow:visible; }
+.gridline { stroke:#262c31; stroke-width:1; }
+.axis-text { fill:#7f888f; font-family:var(--mono); font-size:11px; }
+.series { fill:none; stroke-width:2; stroke-linejoin:round; stroke-linecap:round; }
+.mark-label { font-family:var(--mono); font-size:11px; }
+.slider { display:flex; align-items:center; gap:12px; margin:6px 0; font-family:var(--mono); font-size:11.5px; color:var(--muted); }
+.slider input[type=range] { flex:1 1 140px; accent-color:#8ec7c1; max-width:300px; }
+.slider .val { color:var(--text); min-width:70px; text-align:right; font-variant-numeric:tabular-nums; }
+.readout { display:grid; gap:2px 22px; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); margin-top:16px; border-top:1px solid var(--border); padding-top:14px; }
+.readout .k { font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:#6d777e; }
+.readout .v { font-size:19px; color:var(--text); font-variant-numeric:tabular-nums; }
+.readout .v small { font-size:12px; color:var(--muted); }
+.readout .v.bad { color:#e0724a; }
+.readout .v.good { color:#3ec08c; }
+table.data { width:100%; border-collapse:collapse; margin-top:16px; font-size:13.5px; }
+table.data th, table.data td { text-align:left; padding:7px 10px 7px 0; border-bottom:1px solid var(--border); }
+table.data th { font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:#6d777e; font-weight:400; }
+table.data td.num { text-align:right; padding-right:18px; font-variant-numeric:tabular-nums; }
+details.tablefall summary { font-family:var(--mono); font-size:11.5px; color:var(--muted); cursor:pointer; margin-top:12px; }
+.quad { display:grid; grid-template-columns:auto 1fr 1fr; gap:1px; background:var(--border); border:1px solid var(--border); margin:26px 0; font-size:14px; }
+.quad > div { background:#14171a; padding:13px 15px; }
+.quad .hd { font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:#6d777e; }
+.quad .win { color:#3ec08c; }
+.quad .lose { color:#e0724a; }
+.notice { border-left:2px solid var(--accent); padding:2px 0 2px 16px; color:var(--muted); font-size:14.5px; margin:28px 0; }
+</style>
+</head>
+<body>
 
+<header>
+  <div class="wrap">
+    <a class="brand" href="/">WASSAW.IO</a>
+    <nav>
+      <a href="/">Joseph Park</a>
+      <a href="/tutoring/">Tutoring</a>
+      <a class="here" href="/work/">Work</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <p class="label">Case study</p>
+  <h1>Calling the students most likely to leave is worse than calling at random</h1>
+
+  <p class="lede">Every retention programme I have seen ranks customers by how likely
+  they are to churn and works down the list. On this data that policy performs worse
+  than picking names out of a hat, and the reason is a distinction most dashboards
+  cannot express.</p>
+
+  <p class="note"><strong>The data on this page is artificial</strong>, for privacy.
+  The method is the one I would run against real records. Code:
+  <a href="https://github.com/Wassaw-io/tutoring-center-analytics/blob/main/UPLIFT.md">UPLIFT.md</a>.</p>
+
+  <h2>Four kinds of customer</h2>
+
+  <p>A retention call does something different to each of them, and only one is worth
+  the phone call.</p>
+
+  <div class="quad">
+    <div></div>
+    <div class="hd">the call works</div>
+    <div class="hd">the call does nothing</div>
+    <div class="hd">would have left</div>
+    <div><strong class="win">persuadables</strong><br>the entire return</div>
+    <div>lost causes<br>wasted call</div>
+    <div class="hd">would have stayed</div>
+    <div><strong class="lose">sleeping dogs</strong><br>worse than wasted</div>
+    <div>sure things<br>wasted call</div>
+  </div>
+
+  <p>A churn model scores persuadables, lost causes and sleeping dogs identically
+  high, because all three are at risk. Only the top-left cell pays, and the
+  bottom-left actively loses money: a call opening with "we noticed you've been
+  thinking about stopping" can put the idea on the table for someone who wasn't
+  holding it.</p>
+
+  <p>So the quantity you want is not the probability of churn. It is the difference
+  the call makes, and that is a causal contrast rather than a prediction. No student
+  is ever observed both called and not called, so it has no label to fit against.
+  It needs a randomised trial.</p>
+
+  <h2>Reading a Qini curve</h2>
+
+  <p>The Qini curve answers one question: if I call the top <em>k</em> percent by this
+  score, how many extra students do I keep, over and above what the untreated control
+  group did on its own? The diagonal is what random targeting achieves. Anything
+  below the diagonal is worse than not thinking at all.</p>
+
+  <div class="viz" id="v1">
+    <h3>Incremental students retained, by how deep you call</h3>
+    <p class="sub">Randomised trial, 6,000 students, half called. Hover to read any depth.</p>
+    <svg id="v1-svg" viewBox="0 0 720 350" role="img"
+         aria-label="Qini curves. The uplift models rise well above the random-targeting diagonal; the churn-risk model falls below it."></svg>
+    <div class="readout" id="v1-out"></div>
+    <details class="tablefall">
+      <summary>Table view</summary>
+      <table class="data" id="v1-table"></table>
+    </details>
+  </div>
+
+  <p class="notice">The orange line is what almost everyone actually does. Its Qini
+  coefficient is <strong>−17.5</strong> against +33.2 for the uplift model. It sits
+  below the diagonal for most of its length, which means a centre running that policy
+  would do better firing the model and calling people alphabetically.</p>
+
+  <h2>When is any of this worth doing?</h2>
+
+  <p>This is the part usually left out, and it is the part an owner asks first. A
+  phone call costs about eighteen dollars of staff time. A saved student is worth
+  roughly $1,276 of contribution margin. At a seventy-to-one payoff the wasted calls
+  are nearly free, so the crude policy of calling everybody is genuinely hard to beat.</p>
+
+  <p>Drag the cost up and watch what happens. The moment the intervention stops being
+  a call and becomes an offer, a free month, or an hour of the director's time,
+  blanket outreach goes underwater and targeting is worth more than the offer itself.</p>
+
+  <div class="viz" id="v2">
+    <h3>Net margin by policy, as the intervention gets expensive</h3>
+    <p class="sub">Measured on the trial's held-out half. The dashed line is calling everyone.</p>
+    <div class="slider">
+      <label for="cost">cost per intervention</label>
+      <input type="range" id="cost" min="10" max="420" step="5" value="18">
+      <span class="val" id="cost-val">$18</span>
+    </div>
+    <svg id="v2-svg" viewBox="0 0 720 340" role="img"
+         aria-label="Net margin against calling depth. As the intervention cost rises, blanket outreach goes negative while the targeted policy stays profitable at a shallower depth."></svg>
+    <div class="readout" id="v2-out"></div>
+  </div>
+
+  <h2>What this changes</h2>
+
+  <p>Three things, in the order an owner cares about them.</p>
+
+  <p>Stop ranking retention outreach by churn probability. On this data it is
+  anticorrelated with what the intervention actually achieves, because the students
+  most likely to leave are the ones already past reach. That is one line of code
+  changed and it is the largest single improvement on the page.</p>
+
+  <p>For a cheap intervention, skip the modelling entirely and call everyone, then
+  spend the saved effort on making the call better. Targeting earns its keep once the
+  intervention is expensive, and the slider above tells you where your own crossover
+  sits once you put your real numbers in.</p>
+
+  <p>And none of this exists without a holdout. Randomisation is what makes the
+  effect measurable at all; without it the students a director chooses to call are
+  exactly the students whose outcomes differ for other reasons. Withholding the call
+  from a random third of eligible students for one term converts an entire retention
+  budget from an article of faith into a measured quantity, and it costs a third of a
+  term's calls.</p>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <a href="mailto:joseph.park@wassaw.io">joseph.park@wassaw.io</a> &nbsp;·&nbsp; Tampa, Florida
+  </div>
+</footer>
+
+<script>
+const U = {"n":2400,"value_of_retention":1275.75,"ate":0.10921238168566039,"policies":{"uplift":{"qini_x":[0.0004,0.0171,0.0342,0.0508,0.0679,0.085,0.1017,0.1187,0.1358,0.1525,0.1696,0.1867,0.2033,0.2204,0.2375,0.2542,0.2712,0.2883,0.305,0.3221,0.3392,0.3558,0.3729,0.39,0.4067,0.4238,0.4408,0.4575,0.4746,0.4917,0.5083,0.5254,0.5425,0.5592,0.5763,0.5933,0.61,0.6271,0.6442,0.6608,0.6779,0.695,0.7117,0.7288,0.7458,0.7625,0.7796,0.7967,0.8133,0.8304,0.8475,0.8642,0.8812,0.8983,0.915,0.9321,0.9492,0.9658,0.9829,1.0],"qini_y":[1.0,5.8,7.67,13.46,17.05,24.25,26.95,30.59,38.2,46.75,55.9,56.88,62.3,70.32,76.0,85.0,90.8,97.52,100.4,101.41,100.1,102.88,104.24,105.47,108.16,115.02,119.76,124.87,126.2,122.03,120.47,121.76,123.4,124.44,122.98,120.29,116.34,117.54,114.74,119.24,114.96,108.4,107.63,105.52,106.0,107.44,105.29,105.04,105.01,103.43,104.0,102.18,104.58,109.61,111.83,112.55,113.7,116.55,118.21,118.56],"qini_coef":33.23,"depth_lift":[[0.03,72,0.22625],[0.0498,119,0.21825],[0.0696,167,0.25574],[0.0894,214,0.26131],[0.1092,262,0.25069],[0.129,309,0.22322],[0.1488,357,0.26747],[0.1686,404,0.27875],[0.1884,452,0.25564],[0.2082,499,0.26165],[0.228,547,0.26125],[0.2478,594,0.26599],[0.2676,642,0.27472],[0.2873,689,0.27823],[0.3071,737,0.26411],[0.3269,784,0.25515],[0.3467,832,0.2293],[0.3665,879,0.22253],[0.3863,927,0.21654],[0.4061,974,0.21715],[0.4259,1022,0.22241],[0.4457,1069,0.22432],[0.4655,1117,0.22068],[0.4853,1164,0.19987],[0.5051,1212,0.19354],[0.5249,1259,0.1872],[0.5447,1307,0.18455],[0.5645,1354,0.18171],[0.5843,1402,0.16981],[0.6041,1449,0.15748],[0.6239,1497,0.15426],[0.6437,1544,0.1451],[0.6635,1592,0.14758],[0.6833,1639,0.13846],[0.7031,1687,0.12711],[0.7229,1734,0.12058],[0.7427,1782,0.12044],[0.7624,1829,0.11772],[0.7822,1877,0.11427],[0.802,1924,0.10842],[0.8218,1972,0.10497],[0.8416,2019,0.09911],[0.8614,2067,0.10087],[0.8812,2114,0.098],[0.901,2162,0.10076],[0.9208,2209,0.10002],[0.9406,2257,0.09996],[0.9604,2304,0.10023],[0.9802,2352,0.09694],[1.0,2400,0.09734]]},"risk":{"qini_x":[0.0004,0.0171,0.0342,0.0508,0.0679,0.085,0.1017,0.1187,0.1358,0.1525,0.1696,0.1867,0.2033,0.2204,0.2375,0.2542,0.2712,0.2883,0.305,0.3221,0.3392,0.3558,0.3729,0.39,0.4067,0.4238,0.4408,0.4575,0.4746,0.4917,0.5083,0.5254,0.5425,0.5592,0.5763,0.5933,0.61,0.6271,0.6442,0.6608,0.6779,0.695,0.7117,0.7288,0.7458,0.7625,0.7796,0.7967,0.8133,0.8304,0.8475,0.8642,0.8812,0.8983,0.915,0.9321,0.9492,0.9658,0.9829,1.0],"qini_y":[0.0,3.8,3.19,-3.74,1.08,5.58,3.95,5.96,5.42,7.08,7.11,9.07,5.87,6.47,6.93,8.11,13.39,15.07,16.38,15.33,19.42,21.77,25.67,23.59,28.26,29.12,24.47,22.17,24.51,26.98,29.65,29.69,31.65,32.34,35.9,39.46,44.0,48.64,47.1,47.36,54.46,61.23,64.36,66.7,72.86,71.78,73.14,75.76,81.0,85.13,88.69,90.39,94.5,98.77,103.18,112.84,110.05,115.17,117.92,118.56],"qini_coef":-17.5,"depth_lift":[[0.03,72,0.05926],[0.0498,119,-0.01565],[0.0696,167,0.02857],[0.0894,214,0.04495],[0.1092,262,0.02907],[0.129,309,0.01088],[0.1488,357,0.03251],[0.1686,404,0.03398],[0.1884,452,0.04109],[0.2082,499,0.02127],[0.228,547,0.02391],[0.2478,594,0.02874],[0.2676,642,0.03999],[0.2873,689,0.04548],[0.3071,737,0.04578],[0.3269,784,0.04342],[0.3467,832,0.04554],[0.3665,879,0.05739],[0.3863,927,0.04794],[0.4061,974,0.05567],[0.4259,1022,0.05579],[0.4457,1069,0.04889],[0.4655,1117,0.04182],[0.4853,1164,0.05147],[0.5051,1212,0.04759],[0.5249,1259,0.04719],[0.5447,1307,0.04516],[0.5645,1354,0.04888],[0.5843,1402,0.05278],[0.6041,1449,0.05713],[0.6239,1497,0.06657],[0.6437,1544,0.0594],[0.6635,1592,0.05733],[0.6833,1639,0.07034],[0.7031,1687,0.07616],[0.7229,1734,0.07607],[0.7427,1782,0.07716],[0.7624,1829,0.07779],[0.7822,1877,0.07753],[0.802,1924,0.08284],[0.8218,1972,0.08113],[0.8416,2019,0.08407],[0.8614,2067,0.08538],[0.8812,2114,0.08829],[0.901,2162,0.0914],[0.9208,2209,0.09612],[0.9406,2257,0.0992],[0.9604,2304,0.09886],[0.9802,2352,0.09928],[1.0,2400,0.09734]]},"tlearner":{"qini_x":[0.0004,0.0171,0.0342,0.0508,0.0679,0.085,0.1017,0.1187,0.1358,0.1525,0.1696,0.1867,0.2033,0.2204,0.2375,0.2542,0.2712,0.2883,0.305,0.3221,0.3392,0.3558,0.3729,0.39,0.4067,0.4238,0.4408,0.4575,0.4746,0.4917,0.5083,0.5254,0.5425,0.5592,0.5763,0.5933,0.61,0.6271,0.6442,0.6608,0.6779,0.695,0.7117,0.7288,0.7458,0.7625,0.7796,0.7967,0.8133,0.8304,0.8475,0.8642,0.8812,0.8983,0.915,0.9321,0.9492,0.9658,0.9829,1.0],"qini_y":[0.0,2.05,4.0,1.23,8.05,12.64,20.0,24.33,32.66,34.13,36.54,46.77,55.77,59.7,65.38,70.53,70.48,78.94,81.13,86.9,90.96,92.42,96.78,98.58,99.38,99.55,106.12,109.05,110.62,113.45,110.39,110.8,109.34,108.89,109.25,112.91,116.17,116.76,117.6,122.97,112.48,109.86,106.89,113.34,110.1,109.47,110.4,109.86,113.61,113.21,117.23,112.89,110.65,116.93,113.41,109.9,112.33,116.59,115.35,118.56],"qini_coef":27.78,"depth_lift":[[0.03,72,0.061],[0.0498,119,0.01017],[0.0696,167,0.09785],[0.0894,214,0.13084],[0.1092,262,0.16166],[0.129,309,0.19406],[0.1488,357,0.19597],[0.1686,404,0.18623],[0.1884,452,0.22004],[0.2082,499,0.22561],[0.228,547,0.2201],[0.2478,594,0.2298],[0.2676,642,0.2186],[0.2873,689,0.22292],[0.3071,737,0.21511],[0.3269,784,0.21681],[0.3467,832,0.21157],[0.3665,879,0.21465],[0.3863,927,0.20386],[0.4061,974,0.20122],[0.4259,1022,0.19436],[0.4457,1069,0.19479],[0.4655,1117,0.19187],[0.4853,1164,0.179],[0.5051,1212,0.17943],[0.5249,1259,0.17138],[0.5447,1307,0.16613],[0.5645,1354,0.15197],[0.5843,1402,0.15943],[0.6041,1449,0.15503],[0.6239,1497,0.15277],[0.6437,1544,0.14757],[0.6635,1592,0.146],[0.6833,1639,0.13167],[0.7031,1687,0.12452],[0.7229,1734,0.12407],[0.7427,1782,0.12033],[0.7624,1829,0.11826],[0.7822,1877,0.11498],[0.802,1924,0.11023],[0.8218,1972,0.11179],[0.8416,2019,0.11278],[0.8614,2067,0.10743],[0.8812,2114,0.10359],[0.901,2162,0.10442],[0.9208,2209,0.1005],[0.9406,2257,0.09702],[0.9604,2304,0.09928],[0.9802,2352,0.09633],[1.0,2400,0.09734]]}},"blanket_lift":0.09734};
+const NS = "http://www.w3.org/2000/svg";
+const el = (t, a = {}) => { const n = document.createElementNS(NS, t);
+  for (const k in a) n.setAttribute(k, a[k]); return n; };
+const C = { uplift: "#3987e5", risk: "#d95926", tlearner: "#c98500" };
+const NAME = { uplift: "uplift (S-learner)", risk: "churn risk", tlearner: "uplift (T-learner)" };
+
+/* ---------------- Qini ---------------- */
+(function () {
+  const svg = document.getElementById("v1-svg");
+  const W = 720, H = 350, m = { l: 52, r: 128, t: 12, b: 40 };
+  const keys = ["uplift", "tlearner", "risk"];
+  const ymin = Math.min(0, ...keys.flatMap(k => U.policies[k].qini_y));
+  const ymax = Math.max(...keys.flatMap(k => U.policies[k].qini_y));
+  const px = d => m.l + d * (W - m.l - m.r);
+  const py = v => m.t + (1 - (v - ymin) / (ymax - ymin)) * (H - m.t - m.b);
+  let hov = null;
+
+  function draw() {
+    svg.textContent = "";
+    for (let i = 0; i <= 4; i++) {
+      const v = ymin + (ymax - ymin) * i / 4;
+      svg.appendChild(el("line", { class: "gridline", x1: m.l, x2: W - m.r, y1: py(v), y2: py(v) }));
+      const t = el("text", { class: "axis-text", x: m.l - 9, y: py(v) + 4, "text-anchor": "end" });
+      t.textContent = v.toFixed(0); svg.appendChild(t);
+    }
+    for (let d = 0; d <= 1.001; d += 0.25) {
+      const t = el("text", { class: "axis-text", x: px(d), y: H - m.b + 20, "text-anchor": "middle" });
+      t.textContent = (d * 100).toFixed(0) + "%"; svg.appendChild(t);
+    }
+    const xl = el("text", { class: "axis-text", x: (m.l + W - m.r) / 2, y: H - 4, "text-anchor": "middle" });
+    xl.textContent = "share of roster called"; svg.appendChild(xl);
+
+    // random-targeting diagonal
+    const end = U.policies.uplift.qini_y[U.policies.uplift.qini_y.length - 1];
+    svg.appendChild(el("line", { x1: px(0), y1: py(0), x2: px(1), y2: py(end),
+      stroke: "#6d777e", "stroke-width": 1, "stroke-dasharray": "5 4" }));
+    const dl = el("text", { class: "mark-label", x: px(0.56), y: py(end * 0.56) + 16, fill: "#6d777e" });
+    dl.textContent = "random targeting"; svg.appendChild(dl);
+    svg.appendChild(el("line", { class: "gridline", x1: m.l, x2: W - m.r, y1: py(0), y2: py(0) }));
+
+    const ends = [];
+    keys.forEach(k => {
+      const P = U.policies[k];
+      let d = "";
+      P.qini_x.forEach((x, i) => { d += (i ? " L" : "M") + px(x).toFixed(1) + "," + py(P.qini_y[i]).toFixed(1); });
+      svg.appendChild(el("path", { class: "series", d: d, stroke: C[k] }));
+      ends.push({ k, y: py(P.qini_y[P.qini_y.length - 1]) });
+    });
+    ends.sort((a, b) => a.y - b.y);
+    for (let i = 1; i < ends.length; i++)
+      if (ends[i].y - ends[i - 1].y < 15) ends[i].y = ends[i - 1].y + 15;
+    ends.forEach(({ k, y }) => {
+      const t = el("text", { class: "mark-label", x: px(1) + 9, y: y + 4, fill: C[k] });
+      t.textContent = NAME[k]; svg.appendChild(t);
+    });
+
+    if (hov !== null) {
+      svg.appendChild(el("line", { x1: px(hov), x2: px(hov), y1: m.t, y2: H - m.b,
+        stroke: "#4a545b", "stroke-width": 1 }));
+      keys.forEach(k => {
+        const P = U.policies[k];
+        let i = 0; while (i < P.qini_x.length - 1 && P.qini_x[i] < hov) i++;
+        svg.appendChild(el("circle", { cx: px(P.qini_x[i]), cy: py(P.qini_y[i]), r: 4,
+          fill: C[k], stroke: "#14171a", "stroke-width": 2 }));
+      });
+    }
+    out();
+  }
+
+  function out() {
+    const box = document.getElementById("v1-out");
+    const d = hov === null ? 0.2 : hov;
+    const rows = keys.map(k => {
+      const P = U.policies[k];
+      let i = 0; while (i < P.qini_x.length - 1 && P.qini_x[i] < d) i++;
+      return { k, saved: P.qini_y[i], qini: P.qini_coef };
+    });
+    box.innerHTML =
+      '<div><div class="k">at depth</div><div class="v">' + (d * 100).toFixed(0) + "<small>%</small></div></div>"
+      + rows.map(r => '<div><div class="k">' + NAME[r.k] + '</div><div class="v '
+        + (r.saved < 0 ? "bad" : "") + '">' + r.saved.toFixed(0)
+        + ' <small>saved</small></div></div>').join("");
+  }
+
+  document.getElementById("v1-table").innerHTML =
+    "<tr><th>policy</th><th class='num'>Qini coefficient</th><th>verdict</th></tr>"
+    + keys.map(k => "<tr><td>" + NAME[k] + "</td><td class='num'>"
+      + U.policies[k].qini_coef.toFixed(1) + "</td><td>"
+      + (U.policies[k].qini_coef < 0 ? "worse than random" : "beats random") + "</td></tr>").join("");
+
+  svg.addEventListener("mousemove", e => {
+    const r = svg.getBoundingClientRect();
+    hov = Math.max(0, Math.min(1, ((e.clientX - r.left) / r.width * W - m.l) / (W - m.l - m.r)));
+    draw();
+  });
+  svg.addEventListener("mouseleave", () => { hov = null; draw(); });
+  draw();
+})();
+
+/* ---------------- policy value vs cost ---------------- */
+(function () {
+  const svg = document.getElementById("v2-svg");
+  const W = 720, H = 340, m = { l: 66, r: 112, t: 12, b: 44 };
+  const slider = document.getElementById("cost"), lab = document.getElementById("cost-val");
+  const keys = ["uplift", "risk"];
+  const N = U.n;
+
+  const value = (k, cost) => U.policies[k].depth_lift
+    .map(([d, kk, lift]) => [d, kk * (lift * U.value_of_retention - cost)]);
+  const blanket = cost => N * (U.blanket_lift * U.value_of_retention - cost);
+
+  function draw() {
+    const cost = +slider.value;
+    lab.textContent = "$" + cost;
+    const curves = {}; keys.forEach(k => curves[k] = value(k, cost));
+    const b = blanket(cost);
+    const all = [...Object.values(curves).flat().map(r => r[1]), b, 0];
+    const lo = Math.min(...all) * 1.08, hi = Math.max(...all) * 1.12;
+    const px = d => m.l + d * (W - m.l - m.r);
+    const py = v => m.t + (1 - (v - lo) / (hi - lo)) * (H - m.t - m.b);
+    svg.textContent = "";
+
+    for (let i = 0; i <= 4; i++) {
+      const v = lo + (hi - lo) * i / 4;
+      svg.appendChild(el("line", { class: "gridline", x1: m.l, x2: W - m.r, y1: py(v), y2: py(v) }));
+      const t = el("text", { class: "axis-text", x: m.l - 9, y: py(v) + 4, "text-anchor": "end" });
+      t.textContent = (v / 1000).toFixed(0) + "k"; svg.appendChild(t);
+    }
+    for (let d = 0; d <= 1.001; d += 0.25) {
+      const t = el("text", { class: "axis-text", x: px(d), y: H - m.b + 20, "text-anchor": "middle" });
+      t.textContent = (d * 100).toFixed(0) + "%"; svg.appendChild(t);
+    }
+    const xl = el("text", { class: "axis-text", x: (m.l + W - m.r) / 2, y: H - 6, "text-anchor": "middle" });
+    xl.textContent = "share of roster called"; svg.appendChild(xl);
+
+    svg.appendChild(el("line", { x1: m.l, x2: W - m.r, y1: py(0), y2: py(0),
+      stroke: "#6d777e", "stroke-width": 1 }));
+    svg.appendChild(el("line", { x1: m.l, x2: W - m.r, y1: py(b), y2: py(b),
+      stroke: b < 0 ? "#e0724a" : "#8ec7c1", "stroke-width": 1.4, "stroke-dasharray": "6 4" }));
+    const bl = el("text", { class: "mark-label", x: W - m.r + 8, y: py(b) + 4,
+      fill: b < 0 ? "#e0724a" : "#8ec7c1" });
+    bl.textContent = "call everyone"; svg.appendChild(bl);
+
+    const best = {};
+    keys.forEach(k => {
+      let d = "";
+      curves[k].forEach(([x, v], i) => { d += (i ? " L" : "M") + px(x).toFixed(1) + "," + py(v).toFixed(1); });
+      svg.appendChild(el("path", { class: "series", d: d, stroke: C[k] }));
+      const top = curves[k].reduce((a, r) => r[1] > a[1] ? r : a);
+      best[k] = top;
+      svg.appendChild(el("circle", { cx: px(top[0]), cy: py(top[1]), r: 5, fill: C[k],
+        stroke: "#14171a", "stroke-width": 2 }));
+      const t = el("text", { class: "mark-label", x: W - m.r + 8,
+        y: py(curves[k][curves[k].length - 1][1]) + 4, fill: C[k] });
+      t.textContent = k === "uplift" ? "uplift" : "churn risk"; svg.appendChild(t);
+    });
+
+    const bu = best.uplift[1], wins = bu > b;
+    document.getElementById("v2-out").innerHTML =
+      '<div><div class="k">best targeted</div><div class="v ' + (bu < 0 ? "bad" : "good") + '">$'
+      + Math.round(bu).toLocaleString() + "</div></div>"
+      + '<div><div class="k">at depth</div><div class="v">' + (best.uplift[0] * 100).toFixed(0) + "<small>%</small></div></div>"
+      + '<div><div class="k">call everyone</div><div class="v ' + (b < 0 ? "bad" : "") + '">$'
+      + Math.round(b).toLocaleString() + "</div></div>"
+      + '<div><div class="k">targeting is worth</div><div class="v ' + (wins ? "good" : "") + '">$'
+      + Math.round(bu - b).toLocaleString() + "</div></div>";
+  }
+  slider.addEventListener("input", draw);
+  draw();
+})();
+</script>
+
+</body>
+</html>
