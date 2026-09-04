@@ -1,0 +1,149 @@
+{
+  "n_docs": 14,
+  "n_chunks": 26,
+  "n_queries": 24,
+  "n_hard": 12,
+  "results": {
+    "BM25": {
+      "recall_at_k": 0.8333333333333334,
+      "mrr": 0.6666666666666666,
+      "ndcg": 0.6896282700561415,
+      "recall_hard": 0.8333333333333334,
+      "recall_easy": 0.8333333333333334
+    },
+    "TF-IDF cosine": {
+      "recall_at_k": 0.8333333333333334,
+      "mrr": 0.6666666666666666,
+      "ndcg": 0.6896282700561415,
+      "recall_hard": 0.8333333333333334,
+      "recall_easy": 0.8333333333333334
+    },
+    "LSA (dense stand-in)": {
+      "recall_at_k": 0.875,
+      "mrr": 0.6534722222222222,
+      "ndcg": 0.700156759217875,
+      "recall_hard": 0.8333333333333334,
+      "recall_easy": 0.9166666666666666
+    },
+    "hybrid RRF": {
+      "recall_at_k": 0.875,
+      "mrr": 0.6680555555555555,
+      "ndcg": 0.7020627920341923,
+      "recall_hard": 0.8333333333333334,
+      "recall_easy": 0.9166666666666666
+    }
+  },
+  "hybrid_vs_bm25": null,
+  "sweep": [
+    {
+      "words": 15,
+      "n_chunks": 90,
+      "bm25": 0.8333333333333334,
+      "hybrid": 0.9583333333333334
+    },
+    {
+      "words": 25,
+      "n_chunks": 56,
+      "bm25": 0.875,
+      "hybrid": 0.875
+    },
+    {
+      "words": 35,
+      "n_chunks": 42,
+      "bm25": 0.8333333333333334,
+      "hybrid": 0.875
+    },
+    {
+      "words": 45,
+      "n_chunks": 26,
+      "bm25": 0.8333333333333334,
+      "hybrid": 0.875
+    },
+    {
+      "words": 60,
+      "n_chunks": 15,
+      "bm25": 0.9166666666666666,
+      "hybrid": 0.9166666666666666
+    },
+    {
+      "words": 90,
+      "n_chunks": 14,
+      "bm25": 0.9166666666666666,
+      "hybrid": 0.9166666666666666
+    },
+    {
+      "words": 200,
+      "n_chunks": 14,
+      "bm25": 0.9166666666666666,
+      "hybrid": 0.9166666666666666
+    }
+  ],
+  "failures": [
+    {
+      "query": "how quickly should we call someone who enquired",
+      "gold": [
+        "marketing"
+      ],
+      "hard": false,
+      "top": [
+        "scheduling",
+        "tuition",
+        "curriculum",
+        "referrals",
+        "instructors"
+      ],
+      "recall": 0.0,
+      "rr": 0.0
+    },
+    {
+      "query": "where do new families come from",
+      "gold": [
+        "marketing",
+        "referrals"
+      ],
+      "hard": true,
+      "top": [
+        "referrals",
+        "tuition",
+        "progress",
+        "assessment",
+        "technology"
+      ],
+      "recall": 0.5,
+      "rr": 1.0
+    },
+    {
+      "query": "can I take the student list home",
+      "gold": [
+        "technology"
+      ],
+      "hard": true,
+      "top": [
+        "assessment",
+        "safeguarding",
+        "complaints",
+        "curriculum",
+        "referrals"
+      ],
+      "recall": 0.0,
+      "rr": 0.0
+    },
+    {
+      "query": "can an instructor agree to a discount",
+      "gold": [
+        "complaints",
+        "tuition"
+      ],
+      "hard": true,
+      "top": [
+        "instructors",
+        "capacity",
+        "tuition",
+        "technology",
+        "refunds"
+      ],
+      "recall": 0.5,
+      "rr": 0.3333333333333333
+    }
+  ]
+}
