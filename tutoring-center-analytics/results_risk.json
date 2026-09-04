@@ -1,0 +1,62 @@
+{
+  "n_students": 1400,
+  "n_person_months": 11675,
+  "train_students": 1050,
+  "test_students": 350,
+  "base_rate": 0.06960950764006792,
+  "gbm_auc": 0.544534448994125,
+  "logit_auc": 0.597850275948015,
+  "gbm_brier": 0.06609990115794086,
+  "logit_brier": 0.06415978244729742,
+  "oracle_covariates_auc": 0.5906471426028128,
+  "oracle_full_auc": 0.721327220936443,
+  "best_auc": 0.597850275948015,
+  "headroom": 0.1235,
+  "importance": [
+    {
+      "feature": "high_school",
+      "drop_in_auc": 0.013047667794196194,
+      "sd": 0.005431666490091695
+    },
+    {
+      "feature": "first8_attendance",
+      "drop_in_auc": 0.012409538009613627,
+      "sd": 0.007642202712199382
+    },
+    {
+      "feature": "month",
+      "drop_in_auc": 0.008495081894249593,
+      "sd": 0.011907249410138444
+    },
+    {
+      "feature": "referral",
+      "drop_in_auc": 0.004204424069788132,
+      "sd": 0.001746572739795306
+    },
+    {
+      "feature": "walk_in",
+      "drop_in_auc": 0.001130496706426884,
+      "sd": 0.0015444489348279819
+    },
+    {
+      "feature": "two_sessions",
+      "drop_in_auc": 0.0006251112693608507,
+      "sd": 0.012425816198546295
+    },
+    {
+      "feature": "paid",
+      "drop_in_auc": -0.0030669173936265087,
+      "sd": 0.004805648070033914
+    },
+    {
+      "feature": "assessment_gap",
+      "drop_in_auc": -0.017559306569343097,
+      "sd": 0.010715842017238943
+    }
+  ],
+  "deployed_model": "logistic",
+  "total_value_at_risk": 215987.03999999998,
+  "top25_value_at_risk": 10633.5,
+  "top25_share": 0.04923212059390231,
+  "active_students": 570
+}
