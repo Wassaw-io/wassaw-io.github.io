@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Joseph Park — Wassaw</title>
+<title>Joseph Park · Wassaw</title>
 <meta name="description" content="Joseph Park. Data science, machine learning engineering, and AI engineering, for contract work and full-time roles. Johns Hopkins M.S./Doctor of Engineering in Artificial Intelligence.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0e10'/%3E%3Ctext x='16' y='23' font-size='20' fill='%238ec7c1' text-anchor='middle' font-family='serif'%3E%E2%88%AB%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
@@ -43,16 +43,62 @@
     </li>
     <li>
       <span class="k">Model choice</span>
-      <span class="v">Gradient boosting lost to logistic regression.  Instead of tuning further, I computed the ceiling: 56% of the signal above chance could not be observed in the data collected, so the recommendation was to collect a different variable.</span>
+      <span class="v">Gradient boosting lost to logistic regression.  Instead of tuning further, I computed the ceiling: 56% of the signal above chance could not be observed in the data collected, so the recommendation was to collect a different variable.  <a href="/work/ml-lifecycle/">Case study</a>.</span>
     </li>
     <li>
       <span class="k">Production</span>
-      <span class="v">A command-line tool that validates its input before it predicts, drift monitoring that needs two of three signals to agree before it calls for retraining, and 38 tests that check results against known answers.</span>
+      <span class="v">A command-line tool that validates its input before it predicts, drift monitoring that needs two of three signals to agree before it calls for retraining, a FastAPI service in Docker, SQL versions of the core metrics, and 45 tests that check results against known answers, run by GitHub Actions on every push.  <a href="/work/ml-lifecycle/">Case study</a>.</span>
     </li>
   </ul>
 
   <p class="note">Client names and real figures are withheld.  The published numbers come from artificial data generated to match the real analysis.  Code:
   <a href="https://github.com/Wassaw-io/tutoring-center-analytics">github.com/Wassaw-io/tutoring-center-analytics</a>.</p>
+
+  <!-- ============ CASE STUDIES ============ -->
+  <h2>Case studies</h2>
+
+  <div class="cards">
+    <a class="card thumb" href="/work/tutoring-retention/">
+      <img src="/img/thumbs/tutoring-retention.jpg" alt="" width="600" height="315" loading="lazy">
+      <h3>The churn rate is the wrong number</h3>
+      <p>Paid search returned $3.09 per dollar by the usual formula and $2.70 computed correctly, below the 3:1 line.</p>
+    </a>
+    <a class="card thumb" href="/work/who-to-call/">
+      <img src="/img/thumbs/who-to-call.jpg" alt="" width="600" height="315" loading="lazy">
+      <h3>Calling the riskiest customers is worse than random</h3>
+      <p>An uplift model returned 13 times what the risk-ranked list did at the same depth.</p>
+    </a>
+    <a class="card thumb" href="/work/staffing-forecast/">
+      <img src="/img/thumbs/staffing-forecast.jpg" alt="" width="600" height="315" loading="lazy">
+      <h3>Staff to the top of the forecast, not the middle</h3>
+      <p>Scheduling at the right point in the range cut the expected cost of staffing mistakes by 25%.</p>
+    </a>
+    <a class="card thumb" href="/work/ml-lifecycle/">
+      <img src="/img/thumbs/ml-lifecycle.jpg" alt="" width="600" height="315" loading="lazy">
+      <h3>When to stop tuning, and when to ignore the drift alarm</h3>
+      <p>56% of the missing signal was never recorded, and a drift score of 0.60 came with no loss in accuracy.</p>
+    </a>
+    <a class="card thumb" href="/work/ranking-locations/">
+      <img src="/img/thumbs/ranking-locations.jpg" alt="" width="600" height="315" loading="lazy">
+      <h3>Ranking locations by churn rate ranks the noise</h3>
+      <p>After pooling, none of fourteen centers could be called worse than average at 90% confidence.</p>
+    </a>
+    <a class="card thumb" href="/work/attack-detection/">
+      <img src="/img/thumbs/attack-detection.jpg" alt="" width="600" height="315" loading="lazy">
+      <h3>A 99.97% score in testing, and under 0.1% of new attacks caught</h3>
+      <p>An attack detector tested on attack types it never saw.  One hundred labelled examples took port scans from 0% to 99% caught.</p>
+    </a>
+    <a class="card thumb" href="/work/customer-segments/">
+      <img src="/img/thumbs/customer-segments.jpg" alt="" width="600" height="315" loading="lazy">
+      <h3>Customer segments that describe behavior, and pairings that are not just milk</h3>
+      <p>Scaling turned spending bands into four shopping behaviors, and ranking by lift found the products bought together six times as often as chance.</p>
+    </a>
+    <a class="card thumb" href="/work/review-sentiment/">
+      <img src="/img/thumbs/review-sentiment.jpg" alt="" width="600" height="315" loading="lazy">
+      <h3>Reviews did not predict sales, and they caught a bad batch a month early</h3>
+      <p>Sentiment correlated 0.61 with sales across products and 0.00 within a product over time, and worked as an alarm for product problems.</p>
+    </a>
+  </div>
 
   <!-- ============ ROLES ============ -->
   <h2>What I do</h2>
@@ -108,7 +154,7 @@
 
   <p>Catena is my doctoral research direction: a database whose schema is a category, where the maps between physical systems are typed morphisms that carry what they preserve, and where composing a path through the graph composes the guarantees along with it. The bet is that a good deal of what we currently ask a language model to infer is structure that could be represented exactly instead.</p>
 
-  <p>Spivak solved the exact case in 2010 and CQL implements it; Markov categories
+  <p>Spivak solved the exact case in 2010 and CQL implements it.  Markov categories
   handle the probabilistic case. What neither does is let an approximate retrieval
   system propose a structural correspondence and then verify it against the
   categorical constraints before accepting it. That is the part I am building.</p>

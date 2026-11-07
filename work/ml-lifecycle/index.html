@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Churn model, from choice to monitoring · Joseph Park</title>
+<meta name="description" content="An ML engineering case study: model choice with a computed ceiling, a validated scoring tool, and drift monitoring that avoided a retrain the model did not need.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="When to stop tuning, and when to ignore the drift alarm">
+<meta property="og:description" content="A churn model taken from model choice to deployment and monitoring. The simpler model won, the ceiling was computed, and a drift score of 0.60 came with no loss in accuracy.">
+<meta property="og:image" content="https://wassaw.io/work/ml-lifecycle/og.png">
+<meta property="og:url" content="https://wassaw.io/work/ml-lifecycle/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0e10'/%3E%3Ctext x='16' y='23' font-size='20' fill='%238ec7c1' text-anchor='middle' font-family='serif'%3E%E2%88%AB%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/viz.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="/">WASSAW.IO</a>
+    <nav>
+      <a href="/">Joseph Park</a>
+      <a href="/tutoring/">Tutoring</a>
+      <a class="here" href="/work/">Work</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <p class="label">Case study · ML engineering</p>
+  <h1>When to stop tuning, and when to ignore the drift alarm</h1>
+
+  <p class="lede">A tutoring center wanted a list of which students to contact before they left.  Building it meant three decisions that often go the wrong way: which model to deploy, whether to keep improving it, and when to retrain it.  Here each one went against the usual practice, and each saved time or money.</p>
+
+  <div class="summary">
+    <p><span class="k">Problem</span><span class="v">Rank the center’s 570 current students by how much it stands to lose if each one leaves, and keep that ranking trustworthy as the mix of students changes.</span></p>
+    <p><span class="k">What I did</span><span class="v">Compared gradient boosting with logistic regression on held-out students, computed the best score any model could reach on the data collected, built a command-line tool that validates, scores, and monitors, and tested the drift alarm against a real change in who enrolled.</span></p>
+    <p><span class="k">Decision</span><span class="v">Deploy the simpler model, and put the next effort into collecting different data rather than tuning.  Do not retrain on drift alone: a drift score of 0.60, more than twice the usual threshold, came with no loss in accuracy.</span></p>
+  </div>
+  <ul class="skills">
+    <li>Classification</li><li>Discrete-time survival</li><li>Logistic regression</li><li>Gradient boosting</li><li>Calibration</li><li>Permutation importance</li><li>Drift monitoring (PSI)</li><li>CLI tooling</li><li>FastAPI</li><li>Docker</li><li>GitHub Actions</li><li>pytest</li><li>Python</li><li>scikit-learn</li>
+  </ul>
+
+  <p class="notice">Client names and real figures are withheld.  The numbers here come from artificial data generated to match the real analysis.  Code and full write-ups: <a href="https://github.com/Wassaw-io/tutoring-center-analytics/blob/main/MODELING.md">MODELING.md</a> and <a href="https://github.com/Wassaw-io/tutoring-center-analytics/blob/main/MONITORING.md">MONITORING.md</a>.</p>
+
+  <!-- ============================================================= -->
+  <h2>A standard approach against this analysis</h2>
+
+  <div class="compare">
+    <div>
+      <p class="k">A standard approach</p>
+      <p>Tries the most flexible model available and tunes it until the score stops improving.</p>
+      <p>Retrains whenever a drift alert fires, which can mean a week of work every quarter.</p>
+    </div>
+    <div class="ours">
+      <p class="k">This analysis</p>
+      <p>Shows the simpler model won (AUC 0.598 against 0.545) and that no model could pass about 0.72 with the data collected, so the next gain is in collecting different data, not in tuning.</p>
+      <p>Retrains only when two of three signals agree, which here avoided a retrain the model did not need.</p>
+    </div>
+  </div>
+
+  <p>When the simple approach is enough: in this data the simple model was enough, and knowing that early is part of the result.  With richer data a flexible model might win, and the same comparison would show it.</p>
+
+  <!-- ============================================================= -->
+  <h2>Which model, and how much better it could get</h2>
+
+  <p>Each student becomes one row per month enrolled, with the outcome 1 in the month they left, so any classifier estimates the monthly chance of leaving.  The 1,400 students become 11,675 rows.  The split into training and test sets is by student (1,050 and 350), because splitting rows at random puts the same student on both sides and makes the test score look better than it is.</p>
+
+  <p>Logistic regression beat gradient boosting on both <dfn tabindex="0" data-def="How well a model ranks people who leave above people who stay. 0.5 is a coin flip and 1.0 is perfect.">AUC</dfn> and calibration.  Because the published data is artificial, each student’s true risk is known, so the ceiling can be computed rather than guessed.  A model that knew the true effect of every recorded feature would score 0.591, which the logistic model already passes (it also sees how long each student has stayed, which says something about them).  A model that knew each student’s true risk would score 0.721.  That gap is 56% of all the signal above chance, and it comes from differences between students that the center never recorded.</p>
+
+  <div class="viz" id="v1">
+    <h3>Most of the missing signal was never recorded, so no model could reach it</h3>
+    <p class="sub">Held-out AUC for the two fitted models and two oracles that know things no model can see.  0.5 is a coin flip.</p>
+    <svg id="v1-svg" viewBox="0 0 720 250" role="img" aria-label="AUC: gradient boosting 0.545, logistic regression 0.598, oracle with true feature effects 0.591, oracle with each student's true risk 0.721."></svg>
+    <details class="tablefall">
+      <summary>Table view</summary>
+      <table class="data" id="v1-table"></table>
+    </details>
+  </div>
+
+  <p>So the recommendation was to stop tuning and start collecting something closer to what was missing: attendance over time rather than an eight-week average, whether a parent replies to progress emails, and grade changes in the student’s own class.  Any one of these could plausibly carry more than the whole existing feature set.</p>
+
+  <!-- ============================================================= -->
+  <h2>What the call list can and cannot do</h2>
+
+  <p>The deliverable is a ranked list of the 570 current students, each with a value at risk: the chance of leaving within three months, times expected remaining months, times tuition and margin.  The total is about $216,000 of margin over three months.</p>
+
+  <div class="viz" id="v2">
+    <h3>The 25 highest-value students hold only 5% of the value at risk, so there is no short list</h3>
+    <p class="sub">Share of total value at risk covered by contacting the top students on the list, against contacting the same number at random.  Move the slider or hover.</p>
+    <div class="slider"><label for="nc">students contacted</label><input type="range" id="nc" min="5" max="570" step="5" value="25"><span class="val" id="nc-v"></span></div>
+    <svg id="v2-svg" viewBox="0 0 720 300" role="img" aria-label="Cumulative share of value at risk by number of students contacted. The curve stays close to the random line."></svg>
+    <div class="readout" id="v2-out"></div>
+  </div>
+
+  <p>That changes the shape of the intervention.  A hand-picked rescue list would have been more satisfying to deliver and would have missed most of the money.  Whatever the center does has to be cheap enough to apply to most of the roster.  (Which students to contact is a different question from who is most likely to leave, and it has <a href="/work/who-to-call/">its own case study</a>.)</p>
+
+  <!-- ============================================================= -->
+  <h2>From an analysis to a tool</h2>
+
+  <p>A model that only runs in a notebook stops being used when its author leaves.  So the scoring step is a command-line tool that someone else can run on new data:</p>
+
+<pre class="cmd">python src/score.py train   <span class="c"># fit both models, keep the one that won on held-out students</span>
+python src/score.py score   <span class="c"># check the input, then write the ranked call list</span>
+python src/score.py check   <span class="c"># compare new data with training data, exit code 2 if retraining is due</span></pre>
+
+  <p>The <code>score</code> step checks its input before predicting: a missing column, a value out of range, or a channel the model has never seen stops the run.  The failure this prevents is a renamed column producing confident, wrong numbers for months with nothing looking wrong.  The saved model carries a fingerprint of the rows it was trained on, so any call list can be traced back to its training data.  The <code>check</code> step exits with code 2 when it says to retrain, so it can block a scheduled job instead of printing to a log nobody reads.  The same model is also served over HTTP (FastAPI, packaged in Docker), with the same input checks, so a CRM or a scheduled job can request scores directly.  The repository has 45 tests that check results against known answers, and GitHub Actions runs them, builds the Docker image, and checks that the service answers on every push.</p>
+
+  <!-- ============================================================= -->
+  <h2>When the drift alarm is wrong</h2>
+
+  <p>The model was trained when most new students came from paid search.  The center’s marketing work then moved new enrollment toward organic search and referrals, from 55% paid to 18%.  Improving the business changed the data the model sees, which is exactly what a drift alarm measures.</p>
+
+  <p>By the third quarter the <dfn tabindex="0" data-def="Population stability index: how far a feature’s distribution has moved from what the model was trained on. Above 0.25 is the usual signal to retrain.">PSI</dfn> on the channel feature reached 0.60, more than twice the usual threshold for retraining.  But accuracy did not move: AUC changed by 0.012 and calibration error stayed under 8%.  The mix of students changed, and the relationship between each student’s features and leaving did not, so the model kept working.</p>
+
+  <div class="viz" id="v3">
+    <h3>A drift score past the threshold, and no loss in accuracy</h3>
+    <p class="sub">Drift on the channel feature by quarter (bars), with the 0.10 watch and 0.25 retrain lines, and held-out AUC (line).  Move the slider to try another share of paid students.</p>
+    <div class="slider"><label for="ps">paid share of new students</label><input type="range" id="ps" min="5" max="80" step="1" value="18"><span class="val" id="ps-v"></span></div>
+    <svg id="v3-svg" viewBox="0 0 720 300" role="img" aria-label="PSI on the channel feature rises to 0.60 by quarter 3 while AUC stays near 0.62."></svg>
+    <div class="readout" id="v3-out"></div>
+    <details class="tablefall">
+      <summary>Table view</summary>
+      <table class="data" id="v3-table"></table>
+    </details>
+  </div>
+
+  <p>A team that retrains on every PSI breach spends a week a quarter on it and teaches everyone to ignore the alert.  So the rule here needs two of three signals to agree: PSI at or above 0.25, calibration error at or above 30%, or AUC down 0.03 or more.  The case that should always raise an alarm is the reverse of this one, calibration getting worse while PSI stays flat, because it means the relationship itself has changed.</p>
+
+  <!-- ============================================================= -->
+  <h2>What holds generally, and what is specific to this data</h2>
+
+  <p>Several of these lessons hold for any project of this kind.  Data with many rows per customer has to be split by customer.  A more flexible model cannot recover signal that was never recorded.  A change in the mix of inputs does not hurt a model whose relationship between inputs and outcome still holds, so drift scores alone are a poor reason to retrain.</p>
+
+  <p>The sizes are specific to this data: the two AUCs, the 56% share, the 5% held by the top 25, and the PSI of 0.60.</p>
+
+  <h2>Where else this applies</h2>
+
+  <p>The same build and checks apply to churn models for subscriptions, gyms, and software, to lapse and default models in insurance and lending, and to employee attrition.  The drift lesson applies to any deployed model after a business change, such as a new marketing channel, product line, or region.</p>
+
+  <!-- ============================================================= -->
+  <details class="tech">
+    <summary>Details for technical readers</summary>
+
+    <p><strong>Model.</strong>  Discrete-time hazard on the person-month frame, so the classifier estimates</p>
+    <p class="math"><i>h</i>(<i>t</i> | <i>x</i>) = Pr(leaves in month <i>t</i> | enrolled at the start of <i>t</i>, <i>x</i>),&nbsp;&nbsp; <i>Ŝ</i>(<i>t</i> | <i>x</i>) = ∏<sub><i>k</i> ≤ <i>t</i></sub> (1 − <i>ĥ</i>(<i>k</i> | <i>x</i>))</p>
+    <p>Censoring needs no special handling: a student still enrolled at the cut stops contributing rows.</p>
+
+    <p><strong>Oracles.</strong>  The data was generated with hazard <i>z</i><sub>i</sub> λ exp(β<sup>T</sup><i>x</i><sub>i</sub>), where <i>z</i><sub>i</sub> is a Gamma frailty.  The covariate oracle scores held-out rows with λ exp(β<sup>T</sup><i>x</i>), and the full oracle with <i>z</i><sub>i</sub> λ exp(β<sup>T</sup><i>x</i>).  The unobservable share is (0.721 − 0.598) / (0.721 − 0.5) = 56%.</p>
+
+    <p><strong>Permutation importance</strong> (drop in held-out AUC):</p>
+    <table class="data" id="imp-table"></table>
+
+    <p style="margin-top:20px"><strong>Value at risk.</strong>  Pr(leaves within 3 months) × E[remaining months] × tuition × margin.  In this data, sorting on probability alone gives almost the same order (4.7% of value in the top 25 against 4.9%), because expected remaining months vary little among the highest-risk students.  Where remaining value varies more, the two orders separate.</p>
+
+    <p><strong>Drift.</strong>  PSI = Σ (<i>c</i><sub>i</sub> − <i>r</i><sub>i</sub>) ln(<i>c</i><sub>i</sub> / <i>r</i><sub>i</sub>), a symmetrized Kullback-Leibler divergence between binned distributions.  Bin edges come from the reference window and are then frozen, since recomputing them on current data hides the shift being measured.  The slider computes PSI for the binary paid feature directly from the shares, so it differs slightly from the measured values in the table (0.635 against 0.599 at 18%).</p>
+  </details>
+
+  <div class="cta">
+    <p>Have a model that looked good in testing and is now hard to trust, or a list that nobody acts on?  Email <a href="mailto:joseph.park@wassaw.io">joseph.park@wassaw.io</a> with a description of the problem and, if you can, a sample of the data.  I will tell you whether it is a few hours of work or a few weeks.</p>
+  </div>
+
+  <p class="back"><a href="/work/">All work</a></p>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <a href="mailto:joseph.park@wassaw.io">joseph.park@wassaw.io</a> &nbsp;·&nbsp; Tampa, Florida
+  </div>
+</footer>
+
+<script src="/chart.js"></script>
+<script>
+const D = {"auc":[["gradient boosting",0.545,0.0661],["logistic regression",0.598,0.0642],["oracle: true effects of the recorded features",0.591,null],["oracle: each student\u2019s true risk",0.721,null]],"imp":[["high_school",0.013,0.0054],["first8_attendance",0.0124,0.0076],["month",0.0085,0.0119],["referral",0.0042,0.0017],["walk_in",0.0011,0.0015],["two_sessions",0.0006,0.0124],["paid",-0.0031,0.0048],["assessment_gap",-0.0176,0.0107]],"total":215987,"n":570,"byV":[0,0.002,0.0039,0.0059,0.0079,0.0098,0.0118,0.0138,0.0158,0.0177,0.0197,0.0217,0.0236,0.0256,0.0276,0.0295,0.0315,0.0335,0.0354,0.0374,0.0394,0.0414,0.0433,0.0453,0.0473,0.0492,0.0512,0.0532,0.0551,0.0571,0.0591,0.061,0.063,0.065,0.0669,0.0689,0.0709,0.0729,0.0748,0.0768,0.0788,0.0807,0.0827,0.0847,0.0866,0.0886,0.0906,0.0925,0.0945,0.0965,0.0984,0.1004,0.1024,0.1043,0.1063,0.1083,0.1102,0.1122,0.1142,0.1161,0.1181,0.1201,0.122,0.124,0.1259,0.1279,0.1299,0.1318,0.1338,0.1358,0.1377,0.1397,0.1417,0.1436,0.1456,0.1475,0.1495,0.1515,0.1534,0.1554,0.1573,0.1593,0.1613,0.1632,0.1652,0.1672,0.1691,0.1711,0.173,0.175,0.1769,0.1789,0.1809,0.1828,0.1848,0.1867,0.1887,0.1907,0.1926,0.1946,0.1965,0.1985,0.2004,0.2024,0.2044,0.2063,0.2083,0.2102,0.2122,0.2141,0.2161,0.218,0.22,0.2219,0.2239,0.2259,0.2278,0.2298,0.2317,0.2337,0.2356,0.2376,0.2395,0.2415,0.2434,0.2454,0.2473,0.2493,0.2512,0.2532,0.2551,0.2571,0.259,0.261,0.2629,0.2648,0.2668,0.2687,0.2707,0.2726,0.2746,0.2765,0.2785,0.2804,0.2824,0.2843,0.2862,0.2882,0.2901,0.2921,0.294,0.2959,0.2979,0.2998,0.3018,0.3037,0.3056,0.3076,0.3095,0.3114,0.3134,0.3153,0.3173,0.3192,0.3211,0.3231,0.325,0.3269,0.3289,0.3308,0.3327,0.3347,0.3366,0.3385,0.3405,0.3424,0.3443,0.3463,0.3482,0.3501,0.352,0.354,0.3559,0.3578,0.3597,0.3617,0.3636,0.3655,0.3674,0.3693,0.3713,0.3732,0.3751,0.377,0.3789,0.3809,0.3828,0.3847,0.3866,0.3885,0.3905,0.3924,0.3943,0.3962,0.3981,0.4,0.4019,0.4039,0.4058,0.4077,0.4096,0.4115,0.4134,0.4153,0.4173,0.4192,0.4211,0.423,0.4249,0.4268,0.4287,0.4306,0.4325,0.4344,0.4363,0.4382,0.4401,0.442,0.4439,0.4458,0.4477,0.4496,0.4515,0.4534,0.4553,0.4572,0.4591,0.461,0.4629,0.4648,0.4667,0.4685,0.4704,0.4723,0.4742,0.4761,0.478,0.4799,0.4818,0.4836,0.4855,0.4874,0.4893,0.4912,0.4931,0.4949,0.4968,0.4987,0.5006,0.5024,0.5043,0.5062,0.5081,0.51,0.5118,0.5137,0.5156,0.5174,0.5193,0.5212,0.523,0.5249,0.5268,0.5286,0.5305,0.5324,0.5342,0.5361,0.5379,0.5398,0.5416,0.5435,0.5453,0.5472,0.549,0.5509,0.5527,0.5545,0.5564,0.5582,0.5601,0.5619,0.5637,0.5656,0.5674,0.5692,0.5711,0.5729,0.5747,0.5766,0.5784,0.5802,0.5821,0.5839,0.5857,0.5875,0.5894,0.5912,0.593,0.5948,0.5966,0.5984,0.6002,0.602,0.6038,0.6057,0.6075,0.6093,0.6111,0.6129,0.6147,0.6165,0.6183,0.6201,0.6219,0.6237,0.6255,0.6273,0.6291,0.6309,0.6327,0.6345,0.6362,0.638,0.6398,0.6416,0.6434,0.6452,0.647,0.6488,0.6505,0.6523,0.6541,0.6559,0.6577,0.6594,0.6612,0.663,0.6648,0.6665,0.6683,0.6701,0.6718,0.6736,0.6754,0.6771,0.6789,0.6807,0.6824,0.6842,0.6859,0.6877,0.6894,0.6912,0.6929,0.6947,0.6964,0.6982,0.6999,0.7017,0.7034,0.7052,0.7069,0.7086,0.7104,0.7121,0.7138,0.7156,0.7173,0.719,0.7207,0.7225,0.7242,0.7259,0.7276,0.7293,0.7311,0.7328,0.7345,0.7362,0.7379,0.7396,0.7413,0.743,0.7447,0.7464,0.7482,0.7499,0.7516,0.7533,0.755,0.7567,0.7584,0.7601,0.7618,0.7635,0.7651,0.7668,0.7685,0.7702,0.7718,0.7735,0.7752,0.7769,0.7785,0.7802,0.7819,0.7836,0.7852,0.7869,0.7886,0.7902,0.7919,0.7935,0.7952,0.7969,0.7985,0.8002,0.8018,0.8035,0.8051,0.8067,0.8084,0.81,0.8117,0.8133,0.8149,0.8165,0.8182,0.8198,0.8214,0.823,0.8246,0.8262,0.8278,0.8294,0.831,0.8326,0.8342,0.8358,0.8373,0.8389,0.8405,0.8421,0.8436,0.8452,0.8468,0.8483,0.8499,0.8515,0.853,0.8546,0.8561,0.8577,0.8592,0.8608,0.8623,0.8639,0.8654,0.8669,0.8684,0.87,0.8715,0.873,0.8745,0.8761,0.8776,0.8791,0.8806,0.8821,0.8836,0.8851,0.8866,0.8881,0.8896,0.8911,0.8926,0.8941,0.8956,0.897,0.8985,0.9,0.9015,0.9029,0.9044,0.9058,0.9073,0.9088,0.9102,0.9117,0.9131,0.9146,0.916,0.9174,0.9189,0.9203,0.9218,0.9232,0.9246,0.9261,0.9275,0.9289,0.9304,0.9318,0.9332,0.9346,0.936,0.9374,0.9388,0.9402,0.9416,0.9429,0.9443,0.9457,0.947,0.9484,0.9497,0.951,0.9523,0.9536,0.9549,0.9562,0.9575,0.9588,0.96,0.9612,0.9625,0.9637,0.9649,0.9662,0.9674,0.9686,0.9698,0.971,0.9722,0.9734,0.9746,0.9758,0.977,0.9782,0.9793,0.9805,0.9816,0.9828,0.9839,0.985,0.9861,0.9872,0.9884,0.9894,0.9905,0.9915,0.9925,0.9935,0.9945,0.9955,0.9965,0.9974,0.9983,0.9991,1.0],"byP":[0,0.0018,0.0036,0.0055,0.0074,0.0092,0.0111,0.013,0.0149,0.0168,0.0187,0.0206,0.0225,0.0244,0.0263,0.0283,0.0302,0.0321,0.034,0.0359,0.0378,0.0398,0.0417,0.0436,0.0455,0.0474,0.0494,0.0513,0.0532,0.0552,0.0571,0.059,0.061,0.0629,0.0649,0.0668,0.0688,0.0707,0.0727,0.0746,0.0766,0.0785,0.0805,0.0824,0.0844,0.0863,0.0883,0.0902,0.0922,0.0942,0.0961,0.0981,0.1,0.102,0.104,0.1059,0.1079,0.1098,0.1118,0.1138,0.1157,0.1177,0.1197,0.1216,0.1236,0.1255,0.1275,0.1295,0.1314,0.1334,0.1354,0.1373,0.1393,0.1413,0.1432,0.1452,0.1472,0.1492,0.1511,0.1531,0.1551,0.157,0.159,0.161,0.1629,0.1649,0.1669,0.1688,0.1708,0.1728,0.1747,0.1767,0.1787,0.1807,0.1826,0.1846,0.1866,0.1885,0.1905,0.1925,0.1944,0.1964,0.1984,0.2003,0.2023,0.2043,0.2063,0.2082,0.2102,0.2122,0.2141,0.2161,0.2181,0.22,0.222,0.224,0.2259,0.2279,0.2299,0.2318,0.2338,0.2358,0.2377,0.2397,0.2417,0.2436,0.2456,0.2476,0.2495,0.2515,0.2535,0.2554,0.2574,0.2593,0.2613,0.2633,0.2652,0.2672,0.2691,0.2711,0.2731,0.275,0.277,0.2789,0.2809,0.2829,0.2848,0.2868,0.2887,0.2907,0.2926,0.2946,0.2965,0.2985,0.3005,0.3024,0.3044,0.3063,0.3083,0.3102,0.3122,0.3141,0.3161,0.318,0.32,0.3219,0.3239,0.3258,0.3278,0.3297,0.3317,0.3336,0.3356,0.3375,0.3394,0.3414,0.3433,0.3453,0.3472,0.3492,0.3511,0.353,0.355,0.3569,0.3589,0.3608,0.3627,0.3647,0.3666,0.3686,0.3705,0.3724,0.3744,0.3763,0.3782,0.3802,0.3821,0.384,0.386,0.3879,0.3898,0.3918,0.3937,0.3956,0.3975,0.3995,0.4014,0.4033,0.4052,0.4072,0.4091,0.411,0.4129,0.4149,0.4168,0.4187,0.4206,0.4225,0.4245,0.4264,0.4283,0.4302,0.4321,0.434,0.4359,0.4379,0.4398,0.4417,0.4436,0.4455,0.4474,0.4493,0.4512,0.4531,0.455,0.4569,0.4588,0.4607,0.4626,0.4645,0.4664,0.4683,0.4702,0.4721,0.474,0.4759,0.4778,0.4797,0.4816,0.4834,0.4853,0.4872,0.4891,0.491,0.4929,0.4948,0.4966,0.4985,0.5004,0.5023,0.5042,0.506,0.5079,0.5098,0.5117,0.5136,0.5154,0.5173,0.5192,0.5211,0.5229,0.5248,0.5267,0.5285,0.5304,0.5323,0.5341,0.536,0.5378,0.5397,0.5416,0.5434,0.5453,0.5471,0.549,0.5508,0.5527,0.5545,0.5563,0.5582,0.56,0.5619,0.5637,0.5655,0.5674,0.5692,0.571,0.5729,0.5747,0.5765,0.5784,0.5802,0.582,0.5839,0.5857,0.5875,0.5893,0.5912,0.593,0.5948,0.5966,0.5984,0.6002,0.602,0.6038,0.6057,0.6075,0.6093,0.6111,0.6129,0.6147,0.6165,0.6183,0.6201,0.6219,0.6237,0.6255,0.6273,0.6291,0.6309,0.6327,0.6345,0.6362,0.638,0.6398,0.6416,0.6434,0.6452,0.647,0.6488,0.6505,0.6523,0.6541,0.6559,0.6577,0.6594,0.6612,0.663,0.6648,0.6665,0.6683,0.6701,0.6718,0.6736,0.6754,0.6771,0.6789,0.6807,0.6824,0.6842,0.6859,0.6877,0.6894,0.6912,0.6929,0.6947,0.6964,0.6982,0.6999,0.7017,0.7034,0.7052,0.7069,0.7086,0.7104,0.7121,0.7138,0.7156,0.7173,0.719,0.7207,0.7225,0.7242,0.7259,0.7276,0.7293,0.7311,0.7328,0.7345,0.7362,0.7379,0.7396,0.7413,0.743,0.7447,0.7464,0.7482,0.7499,0.7516,0.7533,0.755,0.7567,0.7584,0.7601,0.7618,0.7635,0.7651,0.7668,0.7685,0.7702,0.7718,0.7735,0.7752,0.7769,0.7785,0.7802,0.7819,0.7836,0.7852,0.7869,0.7886,0.7902,0.7919,0.7935,0.7952,0.7969,0.7985,0.8002,0.8018,0.8035,0.8051,0.8067,0.8084,0.81,0.8117,0.8133,0.8149,0.8165,0.8182,0.8198,0.8214,0.823,0.8246,0.8262,0.8278,0.8294,0.831,0.8326,0.8342,0.8358,0.8373,0.8389,0.8405,0.8421,0.8436,0.8452,0.8468,0.8483,0.8499,0.8515,0.853,0.8546,0.8561,0.8577,0.8592,0.8608,0.8623,0.8639,0.8654,0.8669,0.8684,0.87,0.8715,0.873,0.8745,0.8761,0.8776,0.8791,0.8806,0.8821,0.8836,0.8851,0.8866,0.8881,0.8896,0.8911,0.8926,0.8941,0.8956,0.897,0.8985,0.9,0.9015,0.9029,0.9044,0.9058,0.9073,0.9088,0.9102,0.9117,0.9131,0.9146,0.916,0.9174,0.9189,0.9203,0.9218,0.9232,0.9246,0.9261,0.9275,0.9289,0.9304,0.9318,0.9332,0.9346,0.936,0.9374,0.9388,0.9402,0.9416,0.9429,0.9443,0.9457,0.947,0.9484,0.9497,0.951,0.9523,0.9536,0.9549,0.9562,0.9575,0.9588,0.96,0.9612,0.9625,0.9637,0.9649,0.9662,0.9674,0.9686,0.9698,0.971,0.9722,0.9734,0.9746,0.9758,0.977,0.9782,0.9793,0.9805,0.9816,0.9828,0.9839,0.985,0.9861,0.9872,0.9884,0.9894,0.9905,0.9915,0.9925,0.9935,0.9945,0.9955,0.9965,0.9974,0.9983,0.9991,1.0],"mon":[["reference",0.55,0,0,0.0,0.626,"reference"],["quarter 1",0.45,0.047,0.037,0.076,0.625,"healthy"],["quarter 2",0.31,0.272,0.022,0.031,0.63,"watch"],["quarter 3",0.18,0.599,0.031,0.047,0.614,"watch"]]};
+const $ = id => document.getElementById(id);
+
+/* ---------- v1: AUC and the ceiling ---------- */
+(() => {
+  const svg = $("v1-svg"), W = 720, H = 250, m = { l: 300, r: 60, t: 14, b: 40 };
+  const x = V.scale(0.5, 0.75, m.l, W - m.r), bh = 28, gap = 16;
+  const rows = D.auc, logit = rows[1][1], full = rows[3][1];
+  [0.5, 0.55, 0.6, 0.65, 0.7, 0.75].forEach(v => {
+    svg.appendChild(V.el("line", { class: "gridline", x1: x(v), x2: x(v), y1: m.t, y2: H - m.b }));
+    svg.appendChild(V.el("text", { class: "axis-text", x: x(v), y: H - m.b + 18, "text-anchor": "middle" }, v.toFixed(2)));
+  });
+  rows.forEach((r, i) => {
+    const yy = m.t + i * (bh + gap), oracle = i > 1;
+    svg.appendChild(V.el("text", { class: "axis-text", x: m.l - 10, y: yy + bh / 2 + 4, "text-anchor": "end" }, r[0]));
+    svg.appendChild(V.el("rect", { x: x(0.5), y: yy, width: x(r[1]) - x(0.5), height: bh,
+      fill: i === 1 ? "var(--s1)" : oracle ? "none" : "#3d464d", stroke: oracle ? "#7f888f" : "none", "stroke-dasharray": oracle ? "4 3" : "" }));
+    svg.appendChild(V.el("text", { class: "mark-label", x: x(r[1]) + 6, y: yy + bh / 2 + 4, fill: "#e9ecef" }, r[1].toFixed(3)));
+  });
+  // The unobservable gap, drawn on the full-oracle row.
+  const yy = m.t + 3 * (bh + gap);
+  svg.appendChild(V.el("rect", { x: x(logit), y: yy + 4, width: x(full) - x(logit), height: bh - 8, fill: "#d95926", opacity: 0.55 }));
+  svg.appendChild(V.el("text", { class: "mark-label", x: (x(logit) + x(full)) / 2, y: yy - 4, "text-anchor": "middle", fill: "#d95926" },
+    "never recorded: " + V.pct((full - logit) / (full - 0.5)) + " of the signal"));
+  svg.appendChild(V.el("text", { class: "axis-text", x: (m.l + W - m.r) / 2, y: H - 2, "text-anchor": "middle" }, "held-out AUC"));
+  V.table($("v1-table"), ["Scorer", "AUC", "Brier score"], rows.map(r => [r[0], r[1].toFixed(3), r[2] == null ? "n/a" : r[2].toFixed(4)]));
+  V.table($("imp-table"), ["Feature", "Drop in AUC", "SD"], D.imp.map(r => [r[0], r[1].toFixed(4), r[2].toFixed(4)]));
+})();
+
+/* ---------- v2: coverage of value at risk ---------- */
+(() => {
+  const svg = $("v2-svg"), W = 720, H = 300, m = { l: 52, r: 24, t: 26, b: 40 }, n = D.n;
+  const x = V.scale(0, n, m.l, W - m.r), y = V.scale(0, 1, H - m.b, m.t);
+  let hov = null;
+  function draw() {
+    const N = hov ?? +$("nc").value;
+    $("nc-v").textContent = N;
+    V.frame(svg, { W, H, m, x, y, yt: [0, 0.25, 0.5, 0.75, 1], yfmt: v => V.pct(v),
+      xt: [0, 100, 200, 300, 400, 500].map(v => ({ v, label: v })), xlab: "students contacted, highest value first",
+      ylab: "share of value at risk covered" });
+    svg.appendChild(V.el("line", { x1: x(0), y1: y(0), x2: x(n), y2: y(1), stroke: "#7f888f", "stroke-dasharray": "4 3" }));
+    svg.appendChild(V.el("text", { class: "mark-label", x: x(n * 0.62), y: y(0.62) + 18, fill: "#99a3ab" }, "at random"));
+    svg.appendChild(V.el("path", { class: "series", d: V.line(D.byV.map((v, i) => [i, v]), x, y), stroke: "var(--s1)" }));
+    svg.appendChild(V.el("text", { class: "mark-label", x: x(n * 0.3) - 6, y: y(D.byV[Math.round(n * 0.3)]) - 10, "text-anchor": "end", fill: "var(--s1)" }, "highest value first"));
+    svg.appendChild(V.el("line", { class: "axis", x1: x(N), x2: x(N), y1: m.t, y2: H - m.b, stroke: "#4a545b" }));
+    svg.appendChild(V.el("circle", { cx: x(N), cy: y(D.byV[N]), r: 4.5, fill: "var(--s1)" }));
+    V.readout($("v2-out"), [
+      ["Students contacted", N + " <small>(" + V.pct(N / n) + " of roster)</small>"],
+      ["Value covered", V.usd(D.byV[N] * D.total) + " <small>(" + V.pct(D.byV[N]) + ")</small>"],
+      ["A random list would cover", V.pct(N / n)]
+    ]);
+  }
+  V.hover(svg, W, px => { hov = px === null ? null : Math.max(1, Math.min(n, Math.round(x.inv(px)))); draw(); });
+  $("nc").addEventListener("input", draw);
+  draw();
+})();
+
+/* ---------- v3: drift against accuracy ---------- */
+(() => {
+  const svg = $("v3-svg"), W = 720, H = 300, m = { l: 52, r: 64, t: 26, b: 40 };
+  const rows = D.mon, R0 = rows[0][1];
+  const psi2 = c => (c - R0) * Math.log(c / R0) + ((1 - c) - (1 - R0)) * Math.log((1 - c) / (1 - R0));
+  const cols = rows.length + 1, x = i => m.l + (i + 0.5) * (W - m.l - m.r) / cols, bw = 54;
+  const y = V.scale(0, 0.8, H - m.b, m.t), ya = V.scale(0.5, 0.7, H - m.b, m.t);
+  function draw() {
+    const c = +$("ps").value / 100, p = psi2(c);
+    $("ps-v").textContent = V.pct(c);
+    V.frame(svg, { W, H, m, x: v => v, y, yt: [0, 0.2, 0.4, 0.6, 0.8], yfmt: v => v.toFixed(1), ylab: "PSI" });
+    svg.appendChild(V.el("text", { class: "axis-text", x: W - m.r + 8, y: m.t - 12 }, "AUC"));
+    [0.5, 0.6, 0.7].forEach(v => svg.appendChild(V.el("text", { class: "axis-text", x: W - m.r + 8, y: ya(v) + 4 }, v.toFixed(1))));
+    [[0.1, "watch"], [0.25, "retrain line"]].forEach(([v, t]) => {
+      svg.appendChild(V.el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: v > 0.2 ? "#d95926" : "#c98500", "stroke-dasharray": "4 3", opacity: 0.8 }));
+      svg.appendChild(V.el("text", { class: "mark-label", x: m.l + 4, y: y(v) - 5, fill: v > 0.2 ? "#d95926" : "#c98500" }, t));
+    });
+    const bars = rows.map(r => [r[0], r[1], r[2], r[5]]).concat([["your mix", c, p, null]]);
+    bars.forEach((b, i) => {
+      svg.appendChild(V.el("rect", { x: x(i) - bw / 2, y: y(Math.max(b[2], 0.004)), width: bw, height: y(0) - y(Math.max(b[2], 0.004)),
+        fill: i === rows.length ? "#8ec7c1" : "#3d464d" }));
+      svg.appendChild(V.el("text", { class: "mark-label", x: x(i), y: y(b[2]) - 6, "text-anchor": "middle", fill: "#e9ecef" }, b[2].toFixed(2)));
+      svg.appendChild(V.el("text", { class: "axis-text", x: x(i), y: H - m.b + 16, "text-anchor": "middle" }, b[0]));
+      svg.appendChild(V.el("text", { class: "axis-text", x: x(i), y: H - m.b + 30, "text-anchor": "middle" }, V.pct(b[1]) + " paid"));
+    });
+    const ap = rows.map((r, i) => [i, r[5]]);
+    svg.appendChild(V.el("path", { class: "series", d: ap.map((q, i) => (i ? "L" : "M") + x(q[0]) + "," + ya(q[1])).join(" "), stroke: "var(--s1)" }));
+    ap.forEach(q => svg.appendChild(V.el("circle", { cx: x(q[0]), cy: ya(q[1]), r: 3.5, fill: "var(--s1)" })));
+    svg.appendChild(V.el("text", { class: "mark-label", x: x(0) - bw / 2, y: ya(rows[0][5]) - 10, fill: "var(--s1)" }, "AUC " + rows[0][5].toFixed(3)));
+    V.readout($("v3-out"), [
+      ["PSI at this mix", p.toFixed(2)],
+      ["PSI-only rule", p >= 0.25 ? "retrain" : p >= 0.1 ? "watch" : "no action"],
+      ["Two-of-three rule", p >= 0.25 ? "watch <small>(one signal of three, if accuracy holds as it did)</small>" : "healthy"]
+    ]);
+  }
+  V.table($("v3-table"), ["Cohort", "Paid share", "PSI, channel", "PSI, worst other", "Calibration error", "AUC", "Verdict"],
+    rows.map(r => [r[0], V.pct(r[1]), r[2].toFixed(3), r[3].toFixed(3), V.pct(r[4], 1), r[5].toFixed(3), r[6]]));
+  $("ps").addEventListener("input", draw);
+  draw();
+})();
+</script>
+</body>
+</html>

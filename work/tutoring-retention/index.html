@@ -3,10 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Retention case study — Joseph Park</title>
+<title>Retention case study · Joseph Park</title>
 <meta name="description" content="Student retention as a time-to-event problem: Kaplan-Meier survival, gamma frailty, and lifetime value recomputed off the survival curve. Interactive.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="The churn rate is the wrong number">
+<meta property="og:description" content="Survival analysis on customer retention: why the churn rate falls when no customer changes, and lifetime value recomputed from the survival curve. Paid search fell below the 3:1 return line.">
+<meta property="og:image" content="https://wassaw.io/work/tutoring-retention/og.png">
+<meta property="og:url" content="https://wassaw.io/work/tutoring-retention/">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0e10'/%3E%3Ctext x='16' y='23' font-size='20' fill='%238ec7c1' text-anchor='middle' font-family='serif'%3E%E2%88%AB%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/viz.css">
 <style>
 /* ---- chart system ----------------------------------------------------
    Series colours are the dark-mode steps of a validated categorical set.
@@ -86,17 +93,40 @@ details.tablefall summary { font-family: var(--mono); font-size: 11.5px; color: 
 
 <main class="wrap">
 
-  <p class="label">Case study</p>
+  <p class="label">Case study · Data science</p>
   <h1>The churn rate is the wrong number</h1>
 
   <p class="lede">A tutoring center wanted to know whether its paid search was worth
   running. The answer depended entirely on how you compute what a student is worth,
   and the standard method gets it wrong in a way that keeps bad campaigns alive.</p>
 
-  <p class="note"><strong>The data on this page is artificial</strong>, for privacy. The
-  analysis is the one I ran against a real center's records; the numbers have been
-  regenerated from a model so that nothing identifiable is published. Code and full
-  write-up: <a href="https://github.com/Wassaw-io/tutoring-center-analytics">github.com/Wassaw-io/tutoring-center-analytics</a>.</p>
+  <div class="summary">
+    <p><span class="k">Problem</span><span class="v">Whether the center’s paid search was worth running, which depends on what a student is worth.</span></p>
+    <p><span class="k">What I did</span><span class="v">Treated retention as time-to-event data (Kaplan-Meier curves, a Cox model, and a gamma frailty model fitted by hand), then recomputed lifetime value from the survival curve with margin and discounting.</span></p>
+    <p><span class="k">Decision</span><span class="v">Paid search returned $2.70 per dollar once value was computed correctly, below the 3:1 line that the usual formula said it cleared ($3.09).  The most useful lever was attendance in the first eight weeks, which the center can act on while students are still enrolled.</span></p>
+  </div>
+  <ul class="skills">
+    <li>Survival analysis</li><li>Kaplan-Meier</li><li>Cox proportional hazards</li><li>Frailty models</li><li>Maximum likelihood</li><li>Customer lifetime value</li><li>Python</li><li>NumPy</li><li>SciPy</li>
+  </ul>
+
+  <p class="notice">Client names and real figures are withheld.  The numbers here come from artificial data generated to match the real analysis.  Code and full write-up: <a href="https://github.com/Wassaw-io/tutoring-center-analytics/blob/main/RETENTION.md">RETENTION.md</a>.</p>
+
+  <h2>A standard report against this analysis</h2>
+
+  <div class="compare">
+    <div>
+      <p class="k">A standard report</p>
+      <p>Reports the monthly churn rate and values a customer at revenue divided by churn.</p>
+      <p>When churn falls over time, it concludes that students are settling in and recommends fixing onboarding.</p>
+    </div>
+    <div class="ours">
+      <p class="k">This analysis</p>
+      <p>Uses survival analysis, which handles the two in five students who had not left yet, and values each student from the survival curve with margin and discounting.</p>
+      <p>It shows that a falling churn rate can come from who enrolls rather than from students settling in, which points to screening at intake instead, and that paid search falls below the 3:1 line.</p>
+    </div>
+  </div>
+
+  <p>When the simple method is enough: if churn is roughly constant over a customer’s life and a rough value will do, revenue divided by churn is close.  The gap grows when churn changes over time and when a decision sits near a threshold, as paid search did here.</p>
 
   <!-- ============================================================= -->
   <h2>How long students stay</h2>
@@ -122,7 +152,7 @@ details.tablefall summary { font-family: var(--mono); font-size: 11.5px; color: 
   <!-- ============================================================= -->
   <h2>The churn rate falls, and no student changes</h2>
 
-  <p>The monthly hazard of leaving drops steeply across the window. Everyone reads
+  <p>The monthly <dfn tabindex="0" data-def="The chance that a student who is still enrolled at the start of a month leaves during that month.">hazard</dfn> of leaving drops steeply across the window. Everyone reads
   that as students settling in, which implies you should fix onboarding.</p>
 
   <p>But this data was generated with a <em>constant</em> hazard for every individual
@@ -213,6 +243,23 @@ details.tablefall summary { font-family: var(--mono); font-size: 11.5px; color: 
   likelihood fit, and a demonstration that unobserved heterogeneity attenuates Cox
   coefficients toward zero are in
   <a href="https://github.com/Wassaw-io/tutoring-center-analytics/blob/main/RETENTION.md">RETENTION.md</a>.</p>
+
+  <!-- ============================================================= -->
+  <h2>What holds generally, and what is specific to this data</h2>
+
+  <p>Three results here hold for any customer data.  Leaving out customers who have not left yet understates how long customers stay.  When customers differ in risk, the overall churn rate falls over time even if no one’s risk changes.  And revenue divided by churn is exact only when the churn rate is constant, so it misvalues customers whenever churn changes over time.</p>
+
+  <p>The sizes are specific to this data: the 35% understatement, the fitted θ of 0.48, the 3.09 and 2.70 returns, and the 27% faster churn of paid-search students.</p>
+
+  <h2>Where else this applies</h2>
+
+  <p>The same analysis applies to subscriptions and software, gyms and memberships, insurance policies, employee retention, and equipment lifetimes.  It matters most for any decision built on customer value, such as how much to spend on a marketing channel.</p>
+
+  <div class="cta">
+    <p>Need to know what your customers are worth, or why they leave?  Email <a href="mailto:joseph.park@wassaw.io">joseph.park@wassaw.io</a> with a description of the problem and, if you can, a sample of the data.  I will tell you whether it is a few hours of work or a few weeks.</p>
+  </div>
+
+  <p class="back"><a href="/work/">All work</a></p>
 
 </main>
 

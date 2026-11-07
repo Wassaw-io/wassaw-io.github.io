@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Review sentiment · Joseph Park</title>
+<meta name="description" content="A data science case study: product review sentiment did not predict changes in sales, and it flagged a bad batch a month before sales fell.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Reviews did not predict sales, and they caught a bad batch a month early">
+<meta property="og:description" content="Sentiment scoring on 11,700 product reviews: strong correlation across products, none within a product over time, and an alarm that flagged a product problem a month before sales fell.">
+<meta property="og:image" content="https://wassaw.io/work/review-sentiment/og.png">
+<meta property="og:url" content="https://wassaw.io/work/review-sentiment/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0e10'/%3E%3Ctext x='16' y='23' font-size='20' fill='%238ec7c1' text-anchor='middle' font-family='serif'%3E%E2%88%AB%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/viz.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="/">WASSAW.IO</a>
+    <nav>
+      <a href="/">Joseph Park</a>
+      <a href="/tutoring/">Tutoring</a>
+      <a class="here" href="/work/">Work</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <p class="label">Case study · Data science</p>
+  <h1>Reviews did not predict sales, and they caught a bad batch a month early</h1>
+
+  <p class="lede">A store wanted to know whether the sentiment of its product reviews could forecast demand.  Across products, better reviews went with higher sales.  Within a product, a change in sentiment said nothing about next month’s sales.  What reviews did well was raise an alarm when one product had a problem.</p>
+
+  <div class="summary">
+    <p><span class="k">Problem</span><span class="v">Whether review sentiment for 40 products could forecast demand, and if not, what it is useful for.</span></p>
+    <p><span class="k">What I did</span><span class="v">Scored 11,751 written reviews with a sentiment model, compared the relationship with sales across products and within each product over time, and built an alarm for months when a product’s sentiment falls far below its own history.</span></p>
+    <p><span class="k">Decision</span><span class="v">Do not use sentiment to forecast sales.  Use it as a product-problem alarm: at the chosen setting it flagged the bad batch in the month it reached customers, a month before sales fell 45%, with 4 false alarms in 714 product-months.</span></p>
+  </div>
+  <ul class="skills">
+    <li>Sentiment analysis</li><li>VADER</li><li>Panel data</li><li>Within-unit comparison</li><li>Cluster bootstrap</li><li>Anomaly alerts</li><li>Python</li><li>pandas</li>
+  </ul>
+
+  <p class="notice">Client names and real figures are withheld.  The numbers here come from artificial data generated to match the real analysis.  Code: <a href="https://github.com/Wassaw-io/store-analytics/blob/main/src/reviews.py">reviews.py</a>.</p>
+
+  <!-- ============================================================= -->
+  <h2>A standard report against this analysis</h2>
+
+  <div class="compare">
+    <div>
+      <p class="k">A standard report</p>
+      <p>Plots average sentiment against sales for each product, finds a strong correlation (0.61 here), and proposes a sentiment dashboard for forecasting demand.</p>
+    </div>
+    <div class="ours">
+      <p class="k">This analysis</p>
+      <p>Compares each product with itself over time, where the correlation is 0.00, so sentiment would not have forecast anything.  It then uses the same scores as an alarm for product problems, which caught a bad batch a month before sales fell.</p>
+    </div>
+  </div>
+
+  <p>When the simple method is enough: if the question is which products customers like, the comparison across products answers it.  The trouble starts only when that comparison is used to predict what happens next.</p>
+
+  <!-- ============================================================= -->
+  <h2>Across products, and within a product</h2>
+
+  <p>Better products sell more and collect better reviews, so across the 40 products, sentiment and sales move together.  That says reviews describe which products are popular.  A forecast needs something different: that when a product’s reviews improve, its sales rise afterward.  Comparing each product with itself, month to month, tests that directly.</p>
+
+  <div class="viz" id="v1">
+    <h3>Strong across products, nothing within a product</h3>
+    <p class="sub">Left view: one dot per product, average <dfn tabindex="0" data-def="A score from −1 (very negative) to 1 (very positive) for each review, from the VADER sentiment model, averaged over the month or product.">sentiment</dfn> against average monthly sales (log scale).  Right view: one dot per product-month, change in sentiment against next month’s change in sales.</p>
+    <div class="controls">
+      <button class="chip" id="b-acr" aria-pressed="true">across products</button>
+      <button class="chip" id="b-wit" aria-pressed="false">within a product, month to month</button>
+    </div>
+    <svg id="v1-svg" viewBox="0 0 720 340" role="img" aria-label="Across products sentiment and sales correlate at 0.61. Within products the correlation is near zero."></svg>
+    <div class="readout" id="v1-out"></div>
+  </div>
+
+  <!-- ============================================================= -->
+  <h2>What reviews are good for</h2>
+
+  <p>Partway through the period, one of the best-selling products had a bad batch.  Its reviews turned negative in the month the batch reached customers, and its sales fell about 45% the month after.  The alarm compares each month’s sentiment with that product’s own history and counts only months with at least five reviews.  The setting decides how many false alarms the team accepts.</p>
+
+  <div class="viz" id="v2">
+    <h3>Sentiment dropped a month before sales did</h3>
+    <p class="sub">Units sold (bars) and average sentiment (line) for the product with the bad batch.  Move the slider to change how far below normal a month must fall to raise an alarm.</p>
+    <div class="slider"><label for="zt">alarm setting</label><input type="range" id="zt" min="0" max="5" step="1" value="3"><span class="val" id="zt-v"></span></div>
+    <svg id="v2-svg" viewBox="0 0 720 300" role="img" aria-label="Sales and sentiment by month for one product. Sentiment drops in month 15 and sales drop in month 16."></svg>
+    <div class="readout" id="v2-out"></div>
+  </div>
+
+  <!-- ============================================================= -->
+  <h2>What holds generally, and what is specific to this data</h2>
+
+  <p>The main lesson holds generally: a correlation across units (products, stores, customers) does not show that changing one thing within a unit changes the other, and a forecast needs the second.  Comparing each unit with itself over time is the usual check.  Reviews also tend to be more useful for spotting problems than for predicting demand, since a problem shows up in the text before it shows up in returns and sales.</p>
+
+  <p>The sizes are specific to this data: the 0.61 and 0.00 correlations, the one-month lead, and the false-alarm counts.</p>
+
+  <h2>Where else this applies</h2>
+
+  <p>The same comparison applies to social media mentions and stock or ticket sales, survey scores and customer retention, and employee engagement and turnover.  The alarm applies to support tickets, app store reviews, and patient feedback.</p>
+
+  <!-- ============================================================= -->
+  <details class="tech">
+    <summary>Details for technical readers</summary>
+    <p><strong>Scoring.</strong>  VADER compound score per review, averaged per product-month.  Months with no reviews are left missing rather than filled.</p>
+    <p><strong>Within-product test.</strong>  First differences of monthly sentiment against the next month’s first difference of log units, which removes each product’s fixed level.  The product with the bad batch is left out so one event does not drive the estimate.  Slope 0.001, 95% interval −0.074 to 0.072 from a bootstrap that resamples whole products, since months of the same product are not independent.</p>
+    <p><strong>Alarm.</strong>  For each product-month, <i>z</i> = (sentiment − mean of earlier months) / standard deviation of earlier months, with at least six earlier months and five reviews in the current month.  An alarm fires when <i>z</i> falls at or below the setting.</p>
+  </details>
+
+  <div class="cta">
+    <p>Have reviews, surveys, or support tickets and not sure what they can tell you?  Email <a href="mailto:joseph.park@wassaw.io">joseph.park@wassaw.io</a> with a description of the problem and, if you can, a sample of the data.  I will tell you whether it is a few hours of work or a few weeks.</p>
+  </div>
+
+  <p class="back"><a href="/work/">All work</a></p>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <a href="mailto:joseph.park@wassaw.io">joseph.park@wassaw.io</a> &nbsp;·&nbsp; Tampa, Florida
+  </div>
+</footer>
+
+<script src="/chart.js"></script>
+<script>
+const D = {"rb":0.611,"rw":0.001,"slope":0.001,"ci":[-0.074,0.072],"bp":[[-0.19,5.505],[-0.374,5.059],[-0.048,4.189],[0.248,5.662],[0.451,5.268],[0.154,5.356],[-0.041,5.083],[-0.297,3.977],[0.341,5.481],[0.535,5.874],[0.156,5.899],[-0.281,4.117],[-0.297,5.192],[0.543,5.472],[0.205,5.244],[-0.499,4.029],[0.046,5.928],[-0.309,5.009],[-0.172,6.27],[-0.143,5.418],[-0.242,5.411],[0.187,5.921],[0.042,4.936],[-0.095,4.976],[0.212,6.154],[0.376,5.532],[-0.46,4.643],[-0.006,5.153],[-0.298,5.123],[-0.013,5.046],[-0.394,4.634],[0.066,5.452],[0.019,5.327],[-0.104,4.721],[-0.313,5.27],[-0.03,4.522],[-0.336,4.192],[-0.386,4.029],[0.178,5.856],[-0.355,4.573]],"wp":[[0.007,-0.029],[-0.156,0.485],[0.341,0.142],[0.154,0.098],[-0.142,0.423],[0.066,-0.395],[-0.14,0.0],[-0.449,0.278],[-0.553,-0.221],[-0.476,0.198],[0.362,0.021],[0.111,-0.046],[-0.093,0.241],[0.324,-0.055],[0.297,-0.295],[-0.322,0.152],[-0.447,0.036],[0.1,-0.145],[-0.088,0.108],[0.099,-0.054],[0.027,-0.075],[0.271,0.055],[-0.268,-0.093],[-0.195,0.127],[-0.038,-0.192],[0.001,-0.092],[0.129,0.162],[-0.005,0.085],[-0.045,-0.303],[0.318,-0.186],[0.01,-0.243],[0.327,-0.168],[-0.124,-0.184],[0.033,-0.185],[0.065,-0.238],[-0.462,-0.273],[0.143,-0.112],[-0.466,0.089],[0.195,-0.251],[0.016,0.12],[0.008,-0.294],[0.171,-0.107],[-0.039,0.122],[-0.066,0.089],[-0.095,-0.189],[-0.06,-0.074],[0.182,-0.304],[-0.135,0.084],[-0.441,-0.162],[-0.062,-0.227],[-0.657,0.092],[0.33,0.222],[-0.105,-0.086],[-0.269,0.105],[0.089,0.146],[-0.255,-0.144],[-0.318,0.007],[0.085,0.005],[0.949,-0.173],[0.103,0.134],[-0.015,0.494],[0.251,-0.164],[-0.065,0.121],[-0.478,0.0],[0.336,0.233],[0.055,0.047],[-0.278,0.069],[0.212,0.464],[0.087,-0.128],[-0.424,-0.431],[0.092,-0.082],[0.055,-0.029],[-0.132,-0.123],[-0.308,0.141],[-0.454,0.125],[-0.681,-0.118],[-0.219,0.417],[-0.087,0.078],[0.631,-0.021],[0.288,0.074],[0.271,-0.055],[-0.008,0.13],[-0.06,0.234],[0.164,0.037],[-0.396,-0.297],[0.245,0.156],[-0.281,-0.044],[-0.255,-0.361],[-0.432,-0.039],[0.134,0.161],[0.057,-0.036],[0.008,0.23],[-0.04,0.225],[-0.344,0.186],[0.653,-0.022],[-0.086,0.55],[0.125,0.445],[0.289,0.26],[0.102,-0.004],[0.392,0.037],[0.061,-0.225],[-0.144,0.305],[0.357,0.078],[0.174,0.072],[-0.209,0.019],[0.051,0.067],[0.106,0.122],[0.03,-0.305],[-0.166,-0.011],[0.157,0.13],[-0.053,-0.383],[0.134,-0.31],[-0.193,-0.086],[0.128,0.059],[0.012,-0.027],[-0.442,0.212],[0.363,-0.026],[-0.039,0.083],[0.013,0.241],[0.034,-0.009],[-0.076,-0.036],[0.039,0.148],[0.434,0.0],[-0.097,-0.079],[-0.061,0.052],[-0.11,-0.153],[0.128,-0.088],[-0.198,0.016],[0.178,0.391],[0.038,-0.422],[-0.277,0.256],[0.098,-0.15],[0.078,0.011],[0.255,0.103],[0.216,-0.036],[-0.173,-0.134],[0.248,-0.149],[0.23,-0.082],[-0.28,-0.03],[-0.132,0.123],[0.093,0.122],[-0.043,0.2],[-0.45,-0.011],[-0.145,-0.294],[0.028,0.118],[-0.077,-0.106],[0.039,0.387],[-0.018,-0.392],[-0.156,-0.161],[-0.19,-0.214],[-0.228,0.257],[0.056,0.147],[-0.054,-0.073],[-0.281,-0.207],[0.312,-0.23],[-0.047,0.231],[0.103,-0.008],[-0.107,-0.012],[0.09,0.194],[-0.298,0.02],[0.103,0.033],[-0.045,0.118],[-0.023,0.092],[0.157,-0.056],[0.184,-0.22],[0.155,-0.258],[-0.166,-0.093],[-0.928,-0.089],[-0.313,-0.079],[0.213,0.022],[-0.39,-0.439],[0.146,0.11],[0.026,0.025],[-0.029,0.426],[0.069,-0.132],[0.289,-0.111],[0.295,0.207],[-0.361,0.245],[0.377,0.1],[-0.352,0.095],[0.212,-0.128],[-0.055,0.244],[0.208,-0.146],[-0.582,-0.062],[-0.084,0.235],[-0.231,0.371],[0.281,0.313],[-0.875,0.185],[-0.053,-0.154],[0.227,0.026],[0.077,-0.136],[-0.301,-0.145],[0.102,-0.317],[-0.293,-0.076],[-0.089,0.113],[0.175,0.174],[0.077,0.103],[-0.267,-0.082],[0.09,-0.127],[-0.097,0.053],[-0.216,0.043],[0.571,0.042],[-0.245,0.239],[0.375,-0.121],[0.246,-0.119],[0.023,-0.347],[0.114,0.26],[-0.033,-0.155],[-0.506,0.428],[0.0,0.531],[0.161,0.143],[-0.011,-0.205],[-0.214,0.037],[-0.062,0.08],[-0.002,-0.077],[0.201,0.243],[0.497,0.093],[-0.249,0.011],[0.205,0.213],[-0.256,0.107],[0.771,-0.583],[-0.072,0.195],[0.673,-0.258],[-0.332,0.366],[-0.001,0.185],[-0.05,0.274],[-0.07,-0.262],[0.363,-0.146],[0.268,-0.095],[-0.088,-0.095],[0.08,-0.005],[-0.133,-0.112],[-0.004,-0.1],[-0.069,0.172],[-0.037,-0.099],[0.111,0.029],[0.097,0.072],[0.008,-0.18],[-0.01,-0.038],[0.022,0.0],[0.336,0.128],[-0.304,0.149],[0.097,-0.36],[-0.068,0.05],[0.063,-0.374],[-0.09,-0.025],[-0.054,-0.268],[0.301,0.296],[-0.118,-0.3],[-0.063,0.135],[-0.028,-0.325],[0.153,-0.087],[-0.038,-0.549],[-0.197,0.265],[0.221,0.331],[0.059,0.194],[0.009,0.157],[-0.282,-0.112],[-0.018,-0.141],[0.282,0.011],[0.109,-0.157],[0.028,0.043],[-0.045,-0.073],[0.267,-0.11],[0.005,-0.141],[-0.512,-0.044],[-0.169,-0.174],[-0.189,0.268],[0.36,-0.134],[-0.272,-0.144],[-0.003,0.117],[0.045,0.096],[-0.261,-0.008],[-0.147,0.055],[-0.188,-0.255],[-0.138,0.152],[0.608,0.186],[-0.052,-0.088],[-0.224,0.252],[0.037,-0.004],[0.391,0.164],[-0.443,-0.15],[0.242,0.159],[-0.061,0.111],[0.002,-0.058],[-0.197,-0.164],[0.286,-0.08],[-0.065,-0.069],[0.636,-0.043],[0.418,0.222],[0.064,0.179],[0.134,0.334],[0.035,0.135],[0.06,-0.116],[0.425,-0.178],[0.107,0.064],[0.059,-0.004],[-0.009,0.33],[-0.089,-0.119],[0.312,-0.155],[0.045,0.144],[0.102,-0.059],[0.125,0.191],[-0.093,-0.114],[0.086,-0.145],[0.07,-0.322],[0.09,0.0],[-0.083,-0.373],[0.079,-0.164],[-0.242,-0.015],[0.196,0.488],[-0.163,-0.394],[0.171,0.389],[0.106,-0.22],[0.117,-0.361],[0.166,-0.262],[-0.13,0.169],[0.273,-0.054],[-0.226,-0.111],[-0.21,-0.579],[0.021,-0.08],[-0.239,-0.248],[0.076,-0.028],[-0.141,-0.181],[0.41,0.043],[0.147,0.082],[0.493,0.183],[-0.252,-0.019],[-0.03,-0.035],[-0.037,-0.068],[0.177,0.157],[0.156,0.072],[0.571,0.223],[0.006,0.093],[0.106,-0.082],[0.22,0.251],[-0.262,0.181],[-0.002,0.221],[0.094,-0.155],[-0.218,-0.511],[0.532,0.139],[-0.263,0.293],[-0.134,-0.373],[-0.14,-0.265],[-0.275,0.146],[0.013,0.113],[0.208,0.205],[-0.439,0.189],[-0.09,-0.037],[0.038,0.019],[-0.079,0.139],[-0.295,-0.166],[0.009,0.272],[0.046,-0.071],[-0.269,-0.065],[0.068,0.106],[-0.276,0.053],[0.061,-0.074],[0.167,-0.35],[-0.014,-0.199],[0.28,-0.04],[-0.046,0.064],[0.113,0.036],[-0.717,-0.018],[-0.099,-0.116],[-0.049,0.1],[-0.326,-0.02],[-0.265,-0.071],[0.016,-0.057],[-0.365,-0.159],[-0.006,-0.017],[-0.008,0.262],[0.266,-0.064],[-0.229,0.232],[0.21,-0.414],[-0.368,0.245],[-0.47,-0.096],[-0.392,0.019],[-0.248,0.242],[-0.22,-0.129],[0.3,-0.106],[0.424,0.082],[-0.187,-0.078],[0.046,0.17],[-0.169,0.159],[0.175,0.096],[-0.032,0.094],[-0.498,-0.166],[-0.084,0.019],[0.352,0.076],[0.122,-0.053],[-0.475,-0.223],[-0.226,-0.423],[-0.26,0.331],[-0.283,0.085],[-0.243,-0.662],[-0.103,-0.109],[0.127,-0.13],[0.107,-0.204],[0.279,0.164],[-0.007,-0.139],[0.528,0.33],[-0.345,-0.074],[-0.182,-0.109],[-0.047,0.261],[0.199,-0.066],[-0.075,0.187],[-0.1,0.035],[0.091,0.034],[-0.09,0.053],[0.196,-0.201],[0.102,-0.078],[0.299,-0.127],[-0.078,0.012],[-0.293,-0.512],[0.229,-0.378],[-0.098,-0.359],[0.043,-0.049],[-0.126,0.232],[0.124,0.157],[-0.057,-0.189],[-0.149,0.186],[0.252,-0.463],[0.943,0.185],[-0.024,-0.152],[0.215,-0.095],[0.477,0.087],[0.093,0.195],[0.115,0.156],[0.375,-0.1],[-0.124,0.126],[0.146,0.065],[0.072,0.138],[-0.265,-0.049],[-0.446,-0.38],[-0.102,0.146],[0.185,0.093],[0.013,-0.118],[0.022,-0.196],[-0.095,0.254],[-0.404,-0.169],[0.193,-0.015],[0.076,0.221],[0.017,0.349],[-0.213,0.027],[0.247,0.011],[0.372,0.074],[0.42,-0.185],[0.035,0.048],[-0.098,-0.143],[0.025,-0.135],[0.042,0.181],[0.087,-0.278],[0.206,-0.068],[0.126,-0.345],[-0.244,-0.223],[0.039,0.052],[-0.04,-0.01],[0.23,-0.221],[-0.169,-0.047],[-0.201,-0.236],[0.158,0.065],[0.157,0.046],[0.198,0.134],[-0.294,0.124],[0.092,0.231],[-0.196,-0.132],[0.171,0.068],[0.272,-0.144],[-0.389,0.051],[-0.248,0.645],[-0.056,-0.239],[0.266,0.098],[-0.032,0.007],[0.586,0.433],[-0.669,0.239],[0.158,-0.07],[-0.222,-0.043],[0.457,-0.169],[-0.484,-0.107],[-0.032,0.146],[0.004,-0.033],[-0.002,-0.101],[0.058,-0.053],[0.022,0.092],[-0.07,0.123],[0.111,0.152],[-0.119,0.047],[0.247,0.0],[-0.032,0.273],[-0.205,-0.205],[0.238,0.543],[0.234,0.188],[0.26,-0.219],[0.021,-0.078],[-0.218,-0.239],[0.255,-0.086],[-0.217,0.173],[-0.118,0.005],[-0.207,0.183],[0.592,0.339],[0.059,0.016],[0.204,0.255],[0.103,-0.2],[0.375,0.084],[-0.072,0.372],[0.119,0.474],[-0.437,-0.331],[0.732,0.202],[0.046,-0.055],[0.007,0.026],[-0.159,0.132],[-0.009,-0.161],[0.294,-0.275],[0.196,-0.044],[-0.433,-0.053],[0.127,-0.234],[-0.398,0.473],[-0.089,0.178],[0.188,0.208],[-0.164,0.212],[-0.272,-0.085],[0.151,0.22],[-0.09,0.06],[0.21,-0.172],[-0.227,0.133],[0.089,0.066],[-0.622,-0.018],[-0.096,-0.377],[-0.276,-0.167],[0.057,-0.162],[-0.102,-0.352],[0.341,-0.312],[-0.501,-0.297],[-0.382,0.052],[-0.426,0.409],[-0.233,-0.1],[0.04,0.083],[-0.065,-0.164],[-0.144,0.163],[-0.054,-0.312],[1.297,-0.162],[-0.088,-0.351],[-0.273,0.116],[-0.152,0.137],[-0.044,0.163],[-0.001,0.081],[-0.003,-0.221],[-0.078,0.185],[-0.206,0.183],[-0.08,-0.432],[-0.442,0.042],[0.026,0.187],[0.198,-0.211],[-0.443,-0.043],[-0.081,-0.152],[-0.106,-0.164],[-0.147,0.006],[0.246,-0.397],[-0.103,0.178],[0.097,0.514],[0.151,0.314],[0.04,0.106],[0.345,-0.277],[-0.056,0.229],[-0.152,-0.064],[0.171,-0.131],[0.065,0.153],[0.199,-0.454],[0.265,0.004],[0.5,0.119],[0.047,-0.279],[-0.034,-0.045],[-0.083,0.142],[0.356,0.351],[0.033,0.106],[-0.097,0.235],[-0.126,-0.181],[-0.213,0.049],[-0.177,0.347],[-0.241,-0.179],[-0.221,0.031],[-0.044,0.045],[-0.594,-0.311],[0.079,0.29],[-0.057,0.102],[0.031,0.063],[0.173,0.207],[0.302,0.038],[0.223,0.0],[0.146,-0.089],[0.234,-0.292],[-0.3,0.248],[0.067,-0.04],[0.098,-0.144],[-0.17,-0.164],[-0.717,0.113],[-0.137,0.199],[-0.926,-0.108],[-0.01,-0.19]],"ex":[[0,395,0.27,28.0,NaN],[1,278,0.443,17.0,NaN],[2,325,0.369,27.0,NaN],[3,448,0.279,24.0,NaN],[4,381,0.27,24.0,NaN],[5,504,0.33,33.0,NaN],[6,453,0.35,23.0,0.34],[7,379,0.273,15.0,-0.89],[8,391,0.356,11.0,0.54],[9,438,0.178,21.0,-2.49],[10,397,0.329,20.0,0.23],[11,456,0.19,22.0,-1.77],[12,470,0.141,26.0,-2.15],[13,415,0.282,26.0,-0.1],[14,463,0.268,31.0,-0.27],[15,389,-0.546,24.0,-10.58],[16,244,-0.453,13.0,-3.1],[17,219,-0.577,6.0,-2.84],[18,252,0.282,14.0,0.4],[19,463,0.292,22.0,0.42],[20,296,0.262,27.0,0.31],[21,392,0.224,26.0,0.18],[22,358,0.394,25.0,0.76],[23,350,0.283,20.0,0.35]],"alarm":[{"z":-1.5,"false_alarms":47,"first_defect_flag":15,"product_months_watched":714},{"z":-2.0,"false_alarms":25,"first_defect_flag":15,"product_months_watched":714},{"z":-2.5,"false_alarms":9,"first_defect_flag":15,"product_months_watched":714},{"z":-3.0,"false_alarms":4,"first_defect_flag":15,"product_months_watched":714},{"z":-3.5,"false_alarms":2,"first_defect_flag":15,"product_months_watched":714},{"z":-4.0,"false_alarms":2,"first_defect_flag":15,"product_months_watched":714}],"start":15,"reviews":11751,"products":40,"months":24};
+const $ = id => document.getElementById(id);
+
+/* ---------- v1: across against within ---------- */
+(() => {
+  const svg = $("v1-svg"), W = 720, H = 340, m = { l: 60, r: 24, t: 26, b: 42 };
+  function fit(pts) {
+    const n = pts.length, mx = pts.reduce((s, p) => s + p[0], 0) / n, my = pts.reduce((s, p) => s + p[1], 0) / n;
+    let sxy = 0, sxx = 0; pts.forEach(p => { sxy += (p[0] - mx) * (p[1] - my); sxx += (p[0] - mx) ** 2; });
+    const b = sxy / sxx; return [b, my - b * mx];
+  }
+  function show(across) {
+    $("b-acr").setAttribute("aria-pressed", across); $("b-wit").setAttribute("aria-pressed", !across);
+    const pts = across ? D.bp : D.wp;
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+    const pad = (a, b) => [a - (b - a) * 0.06, b + (b - a) * 0.06];
+    const [x0, x1] = pad(Math.min(...xs), Math.max(...xs)), [y0, y1] = pad(Math.min(...ys), Math.max(...ys));
+    const x = V.scale(x0, x1, m.l, W - m.r), y = V.scale(y0, y1, H - m.b, m.t);
+    V.frame(svg, { W, H, m, x, y, yt: V.ticks(y0, y1, 5), yfmt: v => across ? Math.round(Math.exp(v)) : (v > 0 ? "+" : "") + V.pct(Math.exp(v) - 1),
+      xt: V.ticks(x0, x1, 6).map(v => ({ v, label: (across ? "" : v > 0 ? "+" : "") + v.toFixed(across ? 1 : 1) })),
+      xlab: across ? "average sentiment of the product" : "change in sentiment this month",
+      ylab: across ? "average units a month" : "change in units next month" });
+    pts.forEach(p => svg.appendChild(V.el("circle", { cx: x(p[0]), cy: y(p[1]), r: across ? 4.5 : 2.4, fill: "var(--s1)", "fill-opacity": across ? 0.85 : 0.5 })));
+    const [b, a] = fit(pts);
+    svg.appendChild(V.el("line", { x1: x(x0), x2: x(x1), y1: y(a + b * x0), y2: y(a + b * x1), stroke: "#d95926", "stroke-width": 2 }));
+    V.readout($("v1-out"), across
+      ? [["Correlation", D.rb.toFixed(2)], ["Products", D.products], ["Reads as", "popular products get better reviews"]]
+      : [["Correlation", D.rw.toFixed(2)], ["Slope, 95% range", D.slope.toFixed(3) + " <small>(" + D.ci[0] + " to " + D.ci[1] + ")</small>"], ["Reads as", "no forecasting signal"]]);
+  }
+  $("b-acr").addEventListener("click", () => show(true)); $("b-wit").addEventListener("click", () => show(false));
+  show(true);
+})();
+
+/* ---------- v2: the alarm ---------- */
+(() => {
+  const svg = $("v2-svg"), W = 720, H = 300, m = { l: 52, r: 52, t: 26, b: 40 };
+  const ex = D.ex, x = V.scale(-0.5, ex.length - 0.5, m.l, W - m.r);
+  const umax = Math.max(...ex.map(e => e[1])) * 1.1, yu = V.scale(0, umax, H - m.b, m.t), ys = V.scale(-1, 1, H - m.b, m.t);
+  function draw() {
+    const a = D.alarm[+$("zt").value];
+    $("zt-v").textContent = a.z.toFixed(1) + " sd";
+    V.frame(svg, { W, H, m, x, y: yu, yt: V.ticks(0, umax, 4), yfmt: v => Math.round(v),
+      xt: ex.filter((e, i) => i % 3 === 0).map(e => ({ v: e[0], label: "m" + (e[0] + 1) })), ylab: "units sold" });
+    [-1, 0, 1].forEach(v => svg.appendChild(V.el("text", { class: "axis-text", x: W - m.r + 8, y: ys(v) + 4 }, v)));
+    svg.appendChild(V.el("text", { class: "axis-text", x: W - m.r + 8, y: m.t - 12 }, "sentiment"));
+    const bw = (x(1) - x(0)) * 0.6;
+    ex.forEach(e => svg.appendChild(V.el("rect", { x: x(e[0]) - bw / 2, y: yu(e[1]), width: bw, height: yu(0) - yu(e[1]), fill: "#3d464d" })));
+    const sp = ex.filter(e => e[2] !== null).map(e => [e[0], e[2]]);
+    svg.appendChild(V.el("path", { class: "series", d: V.line(sp, x, ys), stroke: "var(--s1)" }));
+    let labelled = false;
+    ex.forEach(e => {
+      if (e[4] !== null && e[4] <= a.z && e[3] >= 5) {
+        svg.appendChild(V.el("circle", { cx: x(e[0]), cy: ys(e[2]), r: 7, fill: "none", stroke: "#d95926", "stroke-width": 2 }));
+        if (!labelled) svg.appendChild(V.el("text", { class: "mark-label", x: x(e[0]) - 10, y: ys(e[2]) + 22, "text-anchor": "end", fill: "#d95926" }, "alarm"));
+        labelled = true;
+      }
+    });
+    V.readout($("v2-out"), [
+      ["First alarm on the bad batch", a.first_defect_flag === null ? "none" : "month " + (a.first_defect_flag + 1) + " <small>(sales fell in month " + (D.start + 2) + ")</small>"],
+      ["False alarms, all 40 products", a.false_alarms + " <small>in " + a.product_months_watched + " product-months</small>"]
+    ]);
+  }
+  $("zt").addEventListener("input", draw);
+  draw();
+})();
+</script>
+</body>
+</html>

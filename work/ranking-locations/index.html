@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ranking locations · Joseph Park</title>
+<meta name="description" content="A data science case study: hierarchical Bayes across fourteen locations showed that a churn-rate league table ranked sample size more than performance.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ranking locations by churn rate ranks the noise">
+<meta property="og:description" content="Partial pooling across fourteen centers: the pooled ranking held up better from quarter to quarter, and no center could be called worse than average.">
+<meta property="og:image" content="https://wassaw.io/work/ranking-locations/og.png">
+<meta property="og:url" content="https://wassaw.io/work/ranking-locations/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0e10'/%3E%3Ctext x='16' y='23' font-size='20' fill='%238ec7c1' text-anchor='middle' font-family='serif'%3E%E2%88%AB%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/viz.css">
+<style>
+  #v1-svg .row { transition: transform 900ms cubic-bezier(.22,.7,.3,1); }
+  #v1-svg .dot { transition: transform 900ms cubic-bezier(.22,.7,.3,1); }
+  #v1-svg .ci { transition: opacity 500ms; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="/">WASSAW.IO</a>
+    <nav>
+      <a href="/">Joseph Park</a>
+      <a href="/tutoring/">Tutoring</a>
+      <a class="here" href="/work/">Work</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <p class="label">Case study · Data science</p>
+  <h1>Ranking locations by churn rate ranks the noise</h1>
+
+  <p class="lede">A franchise owner wanted to know which of fourteen centers was doing worst, so the regional director could visit and fix it.  The usual ranking by churn rate treats a 45-student center and a 222-student center as equally reliable.  After accounting for the difference, none of the fourteen could be called worse than average.</p>
+
+  <div class="summary">
+    <p><span class="k">Problem</span><span class="v">Which of fourteen centers has a real retention problem, when they range from 45 to 222 students.</span></p>
+    <p><span class="k">What I did</span><span class="v">Fit a hierarchical model that pulls each center’s rate toward the group average in proportion to how little data it has, checked whether each ranking held up from one quarter to the next, and tested where the method fails.</span></p>
+    <p><span class="k">Decision</span><span class="v">Stop publishing the raw ranking, and report each center with its range.  No center was worse than average at 90% confidence, so a $4,200 visit to the bottom center was not supported by the data.</span></p>
+  </div>
+  <ul class="skills">
+    <li>Bayesian statistics</li><li>Hierarchical models</li><li>Empirical Bayes</li><li>Beta-Binomial</li><li>Uncertainty intervals</li><li>Simulation studies</li><li>Python</li><li>SciPy</li>
+  </ul>
+
+  <p class="notice">Client names and real figures are withheld.  The numbers here come from artificial data generated to match the real analysis.  Code and full write-up: <a href="https://github.com/Wassaw-io/tutoring-center-analytics/blob/main/HIERARCHICAL.md">HIERARCHICAL.md</a>.</p>
+
+  <!-- ============================================================= -->
+  <h2>A standard report against this analysis</h2>
+
+  <div class="compare">
+    <div>
+      <p class="k">A standard report</p>
+      <p>Sorts centers by churn rate and sends help to the bottom one.</p>
+      <p>Small centers can swing several places by chance, so the bottom center can change from quarter to quarter.</p>
+    </div>
+    <div class="ours">
+      <p class="k">This analysis</p>
+      <p>Gives each center a pooled rate and a 90% range.  The pooled ranking held up better from one quarter to the next (rank correlation 0.72 against 0.53).</p>
+      <p>Every center’s range included the group average, so the data cannot say which center is worst.</p>
+    </div>
+  </div>
+
+  <p>When the simple method is enough: when every location has a few hundred customers or more, raw rates are already fairly stable and pooling changes little.  It matters most when some locations are small, which is common for franchises, clinics, and sales territories.</p>
+
+  <!-- ============================================================= -->
+  <h2>Pulling each center toward the average</h2>
+
+  <p>A center with 45 students can move several places in the ranking with three extra departures.  So each center’s pooled rate is a weighted average of its own rate and the group average, with more weight on its own rate the more students it has.  The data sets the weights: here, a 45-student center is pulled 85% of the way toward the average and a 222-student center 54% of the way.</p>
+
+  <div class="viz" id="v1">
+    <h3>Pooling pulls every center toward the average, and every 90% range crosses it</h3>
+    <p class="sub">Churn rate for each center, sized by number of students.  Switch to pooled rates to see the centers move and their 90% ranges appear.</p>
+    <div class="controls">
+      <button class="chip" id="b-raw" aria-pressed="true">raw rate</button>
+      <button class="chip" id="b-pool" aria-pressed="false">pooled rate with 90% range</button>
+    </div>
+    <svg id="v1-svg" viewBox="0 0 720 470" role="img" aria-label="Fourteen centers' churn rates, raw and pooled. Pooled rates move toward the 9.7 percent average, and every 90 percent range includes it."></svg>
+    <details class="tablefall">
+      <summary>Table view</summary>
+      <table class="data" id="v1-table"></table>
+    </details>
+  </div>
+
+  <h2>Does the ranking hold up?</h2>
+
+  <p>This is the check I would put in front of an owner, since it needs no statistics to follow.  Rank the centers on one quarter, then compare with the next quarter.  A real ordering repeats, and noise does not.</p>
+
+  <table class="data">
+    <tr><th>Ranking</th><th>Rank correlation, quarter 1 against quarter 2</th></tr>
+    <tr><td>Raw churn rate</td><td class="num">0.53</td></tr>
+    <tr><td>Pooled rate</td><td class="num">0.72</td></tr>
+  </table>
+
+  <p style="margin-top:20px">The highest chance that any one center is worse than average came out at 79% (center M), short of the 90% that would justify acting on it.</p>
+
+  <!-- ============================================================= -->
+  <h2>Where the method fails</h2>
+
+  <p>On this particular sample, pooling made the point estimates worse, not better (mean squared error 0.000359 against 0.000206 for the raw rates).  The reason is that the strength of pooling is fitted from the same fourteen centers, and with that few groups the fit tends to pool too hard.  Here it came out at 262 against a true value of 50.</p>
+
+  <p>So I measured how this behaves as the number of locations grows, over 25 simulated data sets at each size.  Pooling reduced error on average at every size, and the fitted strength settled near the true value from about fifty locations.  It can still lose on a single data set, since the guarantee is about the average over many samples.  With few locations the better model also treats the pooling strength as uncertain, instead of fixing it at one fitted value.</p>
+
+  <div class="viz" id="v2">
+    <h3>Pooling helps on average at every size, and most with many locations</h3>
+    <p class="sub">Average reduction in squared error from pooling, over 25 simulated data sets at each number of locations.  Hover for the fitted pooling strength.</p>
+    <svg id="v2-svg" viewBox="0 0 720 260" role="img" aria-label="Error reduction from pooling rises from 16 percent at 10 locations to 35 percent at 200."></svg>
+    <details class="tablefall">
+      <summary>Table view</summary>
+      <table class="data" id="v2-table"></table>
+    </details>
+  </div>
+
+  <!-- ============================================================= -->
+  <h2>What holds generally, and what is specific to this data</h2>
+
+  <p>The main lesson holds for any ranking of units with different sizes: small units swing further by chance, so they are more likely to land at either end of a raw ranking, and pooling with a range is the standard fix.  The quarter-to-quarter check carries over as well, and it is a quick way to show an owner whether a ranking means anything.  Also general is the caution that a pooling strength fitted from few groups tends to be too strong.</p>
+
+  <p>The sizes are specific to this data: the 0.53 and 0.72 correlations, the 79% top probability, and the fitted strength of 262.</p>
+
+  <h2>Where else this applies</h2>
+
+  <p>The same method applies to ranking stores, clinics, sales representatives, teachers, ad campaigns, and product categories, and to experiments split into many small segments.  It is most useful when someone is about to act on the top or bottom of a table.</p>
+
+  <!-- ============================================================= -->
+  <details class="tech">
+    <summary>Details for technical readers</summary>
+
+    <p><strong>Model.</strong>  Leavers <i>y</i><sub>j</sub> out of <i>n</i><sub>j</sub> students at center <i>j</i>, with</p>
+    <p class="math"><i>y</i><sub>j</sub> ~ Binomial(<i>n</i><sub>j</sub>, <i>p</i><sub>j</sub>),&nbsp;&nbsp; <i>p</i><sub>j</sub> ~ Beta(<i>a</i>, <i>b</i>)</p>
+    <p>The posterior is Beta(<i>a</i> + <i>y</i><sub>j</sub>, <i>b</i> + <i>n</i><sub>j</sub> − <i>y</i><sub>j</sub>), with mean</p>
+    <p class="math">E[<i>p</i><sub>j</sub> | <i>y</i><sub>j</sub>] = (<i>a</i> + <i>y</i><sub>j</sub>) / (<i>a</i> + <i>b</i> + <i>n</i><sub>j</sub>)</p>
+    <p>which is the raw rate and the population mean weighted by <i>n</i><sub>j</sub> and κ = <i>a</i> + <i>b</i>, so κ acts as a prior sample size.  The shrinkage toward the mean is κ / (κ + <i>n</i><sub>j</sub>).  (<i>a</i>, <i>b</i>) are fitted by maximizing the Beta-Binomial marginal likelihood: <i>a</i> = 25.2, <i>b</i> = 236.3, κ = 262, mean 9.65%.</p>
+
+    <p><strong>Why it over-shrinks.</strong>  Empirical Bayes plugs in the fitted (<i>a</i>, <i>b</i>) as if known.  With fourteen groups the marginal likelihood favors large κ, so estimates are pulled past the truth on some draws.  A full hierarchical model with a prior on (<i>a</i>, <i>b</i>) integrates that uncertainty out, which is worth doing at fourteen groups and makes little difference at two hundred.</p>
+
+    <p><strong>Rank stability.</strong>  Spearman correlation between rankings fitted on consecutive quarters.</p>
+  </details>
+
+  <div class="cta">
+    <p>Need to compare locations, teams, or campaigns of different sizes without chasing noise?  Email <a href="mailto:joseph.park@wassaw.io">joseph.park@wassaw.io</a> with a description of the problem and, if you can, a sample of the data.  I will tell you whether it is a few hours of work or a few weeks.</p>
+  </div>
+
+  <p class="back"><a href="/work/">All work</a></p>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <a href="mailto:joseph.park@wassaw.io">joseph.park@wassaw.io</a> &nbsp;·&nbsp; Tampa, Florida
+  </div>
+</footer>
+
+<script src="/chart.js"></script>
+<script>
+const D = {"c":[["D",70,11,0.1571,0.1093,0.0826,0.1388,0.767],["M",222,27,0.1216,0.108,0.0858,0.1321,0.789],["L",115,15,0.1304,0.1069,0.082,0.1342,0.734],["A",187,21,0.1123,0.1031,0.0806,0.1277,0.665],["J",81,10,0.1235,0.1029,0.0773,0.1311,0.636],["H",112,13,0.1161,0.1024,0.0779,0.1293,0.631],["C",59,7,0.1186,0.1006,0.0745,0.1295,0.577],["I",45,5,0.1111,0.0987,0.0723,0.1281,0.53],["E",130,12,0.0923,0.0951,0.072,0.1206,0.444],["K",130,11,0.0846,0.0926,0.0697,0.1178,0.377],["B",208,18,0.0865,0.0921,0.0712,0.115,0.356],["N",124,6,0.0484,0.081,0.0595,0.105,0.134],["F",150,8,0.0533,0.0808,0.0599,0.104,0.123],["G",191,10,0.0524,0.0779,0.0583,0.0996,0.076]],"mu":0.0965,"kappa":261.5,"sweep":[[10,60.7,0.156],[14,73.2,0.227],[25,59.9,0.223],[50,49.8,0.333],[100,50.7,0.342],[200,51.6,0.35]]};
+const $ = id => document.getElementById(id);
+
+/* ---------- v1: raw against pooled ---------- */
+(() => {
+  const svg = $("v1-svg"), W = 720, H = 470, m = { l: 120, r: 30, t: 30, b: 40 };
+  const x = V.scale(0, 0.18, m.l, W - m.r), rowH = (H - m.t - m.b) / D.c.length;
+  const order = k => D.c.map((c, i) => i).sort((a, b) => D.c[b][k] - D.c[a][k]);
+  const rankRaw = order(3), rankPool = order(4);
+  const pos = r => { const p = []; r.forEach((i, k) => p[i] = m.t + (k + 0.5) * rowH); return p; };
+  const yRaw = pos(rankRaw), yPool = pos(rankPool);
+  V.frame(svg, { W, H, m, x, y: v => v, yt: [], xt: [0, 0.03, 0.06, 0.09, 0.12, 0.15, 0.18].map(v => ({ v, label: V.pct(v) })),
+    xlab: "churn rate over the quarter" });
+  [0.03, 0.06, 0.09, 0.12, 0.15].forEach(v => svg.appendChild(V.el("line", { class: "gridline", x1: x(v), x2: x(v), y1: m.t, y2: H - m.b })));
+  svg.appendChild(V.el("line", { x1: x(D.mu), x2: x(D.mu), y1: m.t - 8, y2: H - m.b, stroke: "#8ec7c1", "stroke-dasharray": "4 3" }));
+  svg.appendChild(V.el("text", { class: "mark-label", x: x(D.mu) + 6, y: m.t - 10, fill: "#8ec7c1" }, "group average " + V.pct(D.mu, 1)));
+  const rad = n => 3 + Math.sqrt(n) * 0.55;
+  const rows = D.c.map((c, i) => {
+    const g = V.el("g", { class: "row" });
+    g.appendChild(V.el("text", { class: "axis-text", x: m.l - 12, y: 4, "text-anchor": "end" }, "center " + c[0] + " (" + c[1] + ")"));
+    const ci = V.el("line", { class: "ci", x1: x(c[5]), x2: x(c[6]), y1: 0, y2: 0, stroke: "#8ec7c1", "stroke-width": 2, opacity: 0 });
+    g.appendChild(ci);
+    const dot = V.el("circle", { class: "dot", cx: 0, cy: 0, r: rad(c[1]), fill: "var(--s1)", "fill-opacity": 0.85, stroke: "#0c0e10" });
+    g.appendChild(dot);
+    svg.appendChild(g);
+    return { g, ci, dot };
+  });
+  function show(pooled) {
+    $("b-raw").setAttribute("aria-pressed", !pooled); $("b-pool").setAttribute("aria-pressed", pooled);
+    D.c.forEach((c, i) => {
+      rows[i].g.style.transform = `translate(0px, ${(pooled ? yPool : yRaw)[i]}px)`;
+      rows[i].dot.style.transform = `translate(${x(pooled ? c[4] : c[3])}px, 0px)`;
+      rows[i].ci.style.opacity = pooled ? 0.9 : 0;
+    });
+  }
+  $("b-raw").addEventListener("click", () => show(false));
+  $("b-pool").addEventListener("click", () => show(true));
+  show(false);
+  V.table($("v1-table"), ["Center", "Students", "Left", "Raw rate", "Pooled", "90% range", "Chance worse than average"],
+    rankRaw.map(i => { const c = D.c[i]; return ["center " + c[0], c[1], c[2], V.pct(c[3], 1), V.pct(c[4], 1),
+      V.pct(c[5], 1) + "–" + V.pct(c[6], 1), V.pct(c[7])]; }));
+})();
+
+/* ---------- v2: simulation sweep ---------- */
+(() => {
+  const svg = $("v2-svg"), W = 720, H = 260, m = { l: 52, r: 30, t: 26, b: 40 };
+  const lx = v => Math.log10(v);
+  const x = V.scale(lx(8), lx(250), m.l, W - m.r), y = V.scale(0, 0.4, H - m.b, m.t);
+  let hov = null;
+  function draw() {
+    V.frame(svg, { W, H, m, x: v => x(lx(v)), y, yt: [0, 0.1, 0.2, 0.3, 0.4], yfmt: v => V.pct(v),
+      xt: D.sweep.map(s => ({ v: s[0], label: s[0] })), xlab: "number of locations (log scale)", ylab: "error reduction from pooling" });
+    const pts = D.sweep.map(s => [lx(s[0]), s[2]]);
+    svg.appendChild(V.el("path", { class: "series", d: V.line(pts, x, y), stroke: "var(--s1)" }));
+    D.sweep.forEach((s, i) => svg.appendChild(V.el("circle", { cx: x(pts[i][0]), cy: y(s[2]), r: i === hov ? 6 : 4, fill: "var(--s1)" })));
+    svg.appendChild(V.el("line", { x1: x(lx(14)), x2: x(lx(14)), y1: m.t, y2: H - m.b, stroke: "#7f888f", "stroke-dasharray": "3 4" }));
+    svg.appendChild(V.el("text", { class: "mark-label", x: x(lx(14)) + 6, y: H - m.b - 8, fill: "#99a3ab" }, "this franchise"));
+    if (hov !== null) { const s = D.sweep[hov];
+      V.tip(svg, x(lx(s[0])), y(s[2]) + 34, [s[0] + " locations", "error reduction: " + V.pct(s[2]), "fitted strength: " + s[1].toFixed(0) + " (true 50)"], W); }
+  }
+  V.hover(svg, W, px => {
+    if (px === null) { hov = null; } else {
+      let best = 0; D.sweep.forEach((s, i) => { if (Math.abs(x(lx(s[0])) - px) < Math.abs(x(lx(D.sweep[best][0])) - px)) best = i; });
+      hov = best;
+    }
+    draw();
+  });
+  draw();
+  V.table($("v2-table"), ["Locations", "Median fitted strength (true 50)", "Error reduction"],
+    D.sweep.map(s => [s[0], s[1].toFixed(0), V.pct(s[2])]));
+})();
+</script>
+</body>
+</html>

@@ -163,6 +163,10 @@ h3.label { font-weight: 400; margin: 36px 0 0; scroll-margin-top: 24px; }
 .card h3 { font-family: var(--serif); font-weight: 400; font-size: 20px; margin: 0 0 8px; }
 .card p  { color: var(--muted); font-size: 15px; margin: 0; }
 
+.card.thumb { padding: 0 0 20px; overflow: hidden; }
+.card.thumb img { width: 100%; height: auto; display: block; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.card.thumb h3, .card.thumb p { padding: 0 20px; }
+
 /* ---------- subject groups ---------- */
 
 .subjects { margin: 28px 0; }

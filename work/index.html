@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Work — Joseph Park</title>
+<title>Work · Joseph Park</title>
 <meta name="description" content="Freelance data analysis, forecasting, retrieval and agent systems, and data cleaning. Joseph Park, Johns Hopkins AI doctoral student with a NASA and Caltech research background.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0e10'/%3E%3Ctext x='16' y='23' font-size='20' fill='%238ec7c1' text-anchor='middle' font-family='serif'%3E%E2%88%AB%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="/viz.css">
 </head>
 <body>
 
@@ -66,6 +67,23 @@
 
   </div>
 
+  <!-- ============ PROBLEM INDEX ============ -->
+  <h2>Find your problem</h2>
+
+  <table class="data">
+    <tr><th>Your question</th><th>Where it is answered</th></tr>
+    <tr><td>Which customers will leave, and what is each one worth?</td><td><a href="/work/tutoring-retention/">The churn rate is the wrong number</a></td></tr>
+    <tr><td>Who should we contact to keep them, and is it worth the cost?</td><td><a href="/work/who-to-call/">Who to call is not who will leave</a></td></tr>
+    <tr><td>How many staff, or how much stock, do we need next month?</td><td><a href="/work/staffing-forecast/">Staff to the top of the forecast</a></td></tr>
+    <tr><td>Did a campaign or a change actually work?</td><td><a href="/work/staffing-forecast/">The seasonality check, and the randomized trial in Who to call</a></td></tr>
+    <tr><td>Is our model worth improving, and can we still trust it?</td><td><a href="/work/ml-lifecycle/">When to stop tuning</a></td></tr>
+    <tr><td>Which location, team, or campaign is really doing worst?</td><td><a href="/work/ranking-locations/">Ranking locations ranks the noise</a></td></tr>
+    <tr><td>How do our customers differ, and what do they buy together?</td><td><a href="/work/customer-segments/">Customer segments and pairings</a></td></tr>
+    <tr><td>Can our reviews or surveys predict demand, or warn us of problems?</td><td><a href="/work/review-sentiment/">Review sentiment</a></td></tr>
+    <tr><td>Will our detector or filter catch something new?</td><td><a href="/work/attack-detection/">Attack detection</a></td></tr>
+    <tr><td>Can our search or chatbot find the right answer?</td><td><a href="https://github.com/Wassaw-io/tutoring-center-analytics/blob/main/RETRIEVAL.md">Retrieval evaluation (write-up)</a></td></tr>
+  </table>
+
   <!-- ============ CASE STUDIES ============ -->
   <h2>Case studies you can poke at</h2>
 
@@ -83,25 +101,54 @@
       random.  Uplift modelling on a randomised trial, a Qini curve you can read at
       any depth, and the intervention cost where targeting starts to pay.</p>
     </a>
+    <a class="card" href="/work/staffing-forecast/">
+      <h3>Staff to the top of the forecast, not the middle</h3>
+      <p>A backtested forecast turned into a staffing schedule, with a calculator for your own costs.  Scheduling at the right point in the range cut the expected cost of mistakes by 25%.</p>
+    </a>
+    <a class="card" href="/work/ml-lifecycle/">
+      <h3>When to stop tuning, and when to ignore the drift alarm</h3>
+      <p>Model choice with a computed ceiling, a scoring tool that checks its input, and drift monitoring that avoided a retrain the model did not need.</p>
+    </a>
+    <a class="card" href="/work/ranking-locations/">
+      <h3>Ranking locations by churn rate ranks the noise</h3>
+      <p>Hierarchical Bayes across fourteen centers, with a toggle between raw and pooled rates.  None could be called worse than average.</p>
+    </a>
+    <a class="card" href="/work/attack-detection/">
+      <h3>A 99.97% score in testing, and under 0.1% of new attacks caught</h3>
+      <p>An attack detector tested on attack types it never saw, with every threshold stated as alerts per day, and what 100 labelled examples add.</p>
+    </a>
+    <a class="card" href="/work/customer-segments/">
+      <h3>Customer segments that describe behavior, and pairings that are not just milk</h3>
+      <p>Segmentation and market basket analysis in SQL and Python, with a toggle between raw and scaled segments and a sortable rules table.</p>
+    </a>
+    <a class="card" href="/work/review-sentiment/">
+      <h3>Reviews did not predict sales, and they caught a bad batch a month early</h3>
+      <p>Sentiment scoring on 11,700 reviews, a comparison across and within products, and an alarm with a slider for how many false alarms to accept.</p>
+    </a>
   </div>
 
   <!-- ============ BY ROLE ============ -->
   <h2>Projects by role</h2>
 
-  <p>All of these come from one engagement with a tutoring center, worked end to end.  Client names and real figures are withheld, and the published numbers come from artificial data generated to match the real analysis.</p>
+  <p>Client names and real figures are withheld on every project.  The published numbers come from artificial data generated to match the real analysis, or from a public data set where one fits.</p>
 
   <h3 class="label" id="data-science">Data science</h3>
   <ul class="facts">
     <li><span class="k">Survival</span><span class="v">How long customers stay, and what each one is worth.  <a href="/work/tutoring-retention/">Case study</a>.</span></li>
     <li><span class="k">Causal</span><span class="v">Uplift modelling on a randomised trial, and when targeting pays.  <a href="/work/who-to-call/">Case study</a>.</span></li>
-    <li><span class="k">Forecasting</span><span class="v">Seasonal decomposition that checks the headline result, a SARIMA forecast backtested from 22 starting points, and staffing to the top of the interval.  <a href="https://github.com/Wassaw-io/tutoring-center-analytics/blob/main/FORECASTING.md">Write-up</a>.</span></li>
-    <li><span class="k">Bayesian</span><span class="v">Partial pooling across fourteen centers, which showed that none could be called worse than average at 90% confidence.  <a href="https://github.com/Wassaw-io/tutoring-center-analytics/blob/main/HIERARCHICAL.md">Write-up</a>.</span></li>
+    <li><span class="k">Forecasting</span><span class="v">Seasonal decomposition that checks the headline result, a SARIMA forecast backtested from 22 starting points, and staffing to the top of the interval.  <a href="/work/staffing-forecast/">Case study</a>.</span></li>
+    <li><span class="k">Bayesian</span><span class="v">Partial pooling across fourteen centers, which showed that none could be called worse than average at 90% confidence.  <a href="/work/ranking-locations/">Case study</a>.</span></li>
+    <li><span class="k">Segments</span><span class="v">Customer segmentation and market basket analysis, with the features and pair rules written in SQL.  <a href="/work/customer-segments/">Case study</a>.</span></li>
+    <li><span class="k">Text</span><span class="v">Review sentiment compared across and within products, and used as an alarm for product problems.  <a href="/work/review-sentiment/">Case study</a>.</span></li>
+    <li><span class="k">SQL</span><span class="v">Funnel, retention, and trend metrics written as SQL and run with DuckDB, including a retention query that only counts customers who joined long enough ago.  <a href="https://github.com/Wassaw-io/tutoring-center-analytics/tree/main/sql">Queries</a>.</span></li>
   </ul>
 
   <h3 class="label" id="ml-engineering">Machine learning engineering</h3>
   <ul class="facts">
-    <li><span class="k">Modelling</span><span class="v">Gradient boosting against logistic regression, split by customer rather than by row, and the computed ceiling on what any model could reach.  <a href="https://github.com/Wassaw-io/tutoring-center-analytics/blob/main/MODELING.md">Write-up</a>.</span></li>
-    <li><span class="k">Monitoring</span><span class="v">Drift detection that tells feature drift from concept drift, and a command-line tool that exits non-zero when retraining is due.  <a href="https://github.com/Wassaw-io/tutoring-center-analytics/blob/main/MONITORING.md">Write-up</a>.</span></li>
+    <li><span class="k">Modelling</span><span class="v">Gradient boosting against logistic regression, split by customer rather than by row, and the computed ceiling on what any model could reach.  <a href="/work/ml-lifecycle/">Case study</a>.</span></li>
+    <li><span class="k">Monitoring</span><span class="v">Drift detection that tells feature drift from concept drift, and a command-line tool that exits non-zero when retraining is due.  <a href="/work/ml-lifecycle/">Case study</a>.</span></li>
+    <li><span class="k">Detection</span><span class="v">An attack detector evaluated on attack types it never saw, with thresholds set from the alert budget.  <a href="/work/attack-detection/">Case study</a>.</span></li>
+    <li><span class="k">Serving</span><span class="v">The model behind a FastAPI service in Docker, with the same input checks, and GitHub Actions running the tests and building the image on every push.  <a href="https://github.com/Wassaw-io/tutoring-center-analytics/blob/main/src/api.py">Code</a>.</span></li>
   </ul>
 
   <h3 class="label" id="ai-engineering">AI engineering</h3>

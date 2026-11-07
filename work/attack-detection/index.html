@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attack detection · Joseph Park</title>
+<meta name="description" content="An ML engineering case study: a network attack detector that scored 99.97% in cross-validation and caught under 0.1% of attack types it had not seen, and what fixed it.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="A 99.97% score in testing, and under 0.1% of new attacks caught">
+<meta property="og:description" content="Testing an attack detector on attack types it never saw, setting its threshold from the alerts a team can review, and measuring what 100 labelled examples add.">
+<meta property="og:image" content="https://wassaw.io/work/attack-detection/og.png">
+<meta property="og:url" content="https://wassaw.io/work/attack-detection/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0e10'/%3E%3Ctext x='16' y='23' font-size='20' fill='%238ec7c1' text-anchor='middle' font-family='serif'%3E%E2%88%AB%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/viz.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="/">WASSAW.IO</a>
+    <nav>
+      <a href="/">Joseph Park</a>
+      <a href="/tutoring/">Tutoring</a>
+      <a class="here" href="/work/">Work</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <p class="label">Case study · ML engineering</p>
+  <h1>A 99.97% score in testing, and under 0.1% of new attacks caught</h1>
+
+  <p class="lede">A small company wanted a model to flag attacks in its network traffic.  A random forest trained on one kind of attack scored 99.97% F1 in cross-validation, and on seven kinds of attack it had not seen, it caught almost nothing.  The useful questions turned out to be how many alerts the team could review and how many labelled examples a new attack needs.</p>
+
+  <div class="summary">
+    <p><span class="k">Problem</span><span class="v">Whether a traffic classifier would catch attacks, including kinds it was not trained on, without burying the team in alerts.</span></p>
+    <p><span class="k">What I did</span><span class="v">Trained a random forest on labelled denial-of-service traffic with network identifiers removed, tested it on seven other attack types, compared it with an anomaly detector trained only on normal traffic, and turned every threshold into alerts per day.</span></p>
+    <p><span class="k">Decision</span><span class="v">Judge a detector on attack types held out from training, set its threshold from the number of alerts the team can review, and label about 100 examples of each attack type that matters.  That took a held-out port scan from 0% to 99% caught, at about 85 to 100 alerts a day.</span></p>
+  </div>
+  <ul class="skills">
+    <li>Classification</li><li>Random forests</li><li>Anomaly detection</li><li>Isolation forest</li><li>Out-of-distribution evaluation</li><li>Threshold selection</li><li>Data leakage checks</li><li>Python</li><li>scikit-learn</li>
+  </ul>
+
+  <p class="notice">Client names and real figures are withheld.  The traffic here is the public CIC-IDS2017 benchmark from the Canadian Institute for Cybersecurity, not the client’s network.  Code: <a href="https://github.com/Wassaw-io/attack-detection">github.com/Wassaw-io/attack-detection</a>.</p>
+
+  <!-- ============================================================= -->
+  <h2>A standard evaluation against this analysis</h2>
+
+  <div class="compare">
+    <div>
+      <p class="k">A standard evaluation</p>
+      <p>Reports cross-validated accuracy on the same capture the model was trained on (99.97% F1 here), and uses the default threshold of 0.5.</p>
+    </div>
+    <div class="ours">
+      <p class="k">This analysis</p>
+      <p>Tests on attack types the model never saw (under 0.1% of each caught at the default threshold), shows every threshold as alerts per day, and measures what a few labelled examples add (port scans and FTP password guessing from 0% to 99%).</p>
+    </div>
+  </div>
+
+  <p>When the simple evaluation is enough: if the only threat that matters is the one in the training data, the standard model is fine.  It caught 99.95% of that attack in cross-validation, with almost no false alarms.</p>
+
+  <!-- ============================================================= -->
+  <h2>The test that matters</h2>
+
+  <p>The dataset records which addresses the attacks came from and when, so a model allowed to see addresses, ports, or timestamps can learn the experiment’s schedule instead of what an attack looks like.  I removed all of those and kept 78 statistics that describe each flow’s behavior (sizes, timings, flags).  The forest was trained on denial-of-service traffic and then scored on seven attack types from other days.</p>
+
+  <div class="viz" id="v1">
+    <h3>None of the seven new attack types was caught until about 100 examples of each were labelled</h3>
+    <p class="sub">Share of attack flows caught at the default threshold: the model trained on denial-of-service only, and the same model with 100 labelled flows of that attack added to training.</p>
+    <svg id="v1-svg" viewBox="0 0 720 330" role="img" aria-label="Recall at the default threshold is under 0.1 percent for all seven new attack types, and 38 to 99 percent after 100 labelled examples."></svg>
+    <details class="tablefall">
+      <summary>Table view</summary>
+      <table class="data" id="v1-table"></table>
+    </details>
+  </div>
+
+  <p>One hundred examples took port scans and FTP password guessing to 99% caught, cross-site scripting to 93%, and SSH password guessing to 84%, while normal traffic raised alerts at about the same rate as before.  Botnet traffic was the hardest, at 38%.  One caveat: the labelled examples came from the same attack session as the flows they were tested on, so this is closer to catching a repeat of an attack than a variant of it.</p>
+
+  <!-- ============================================================= -->
+  <h2>The alerts the team can handle</h2>
+
+  <p>The other way to catch more is to lower the threshold.  Every threshold flags some share of normal traffic, and at about 530,000 normal flows in a working day, even 1% is about 5,100 alerts a day.  Move the slider to see what each alert budget buys.</p>
+
+  <div class="viz" id="v2">
+    <h3>Lowering the threshold catches some new attacks, at thousands of alerts a day</h3>
+    <p class="sub">Share of each new attack type caught at a given share of normal traffic flagged, for the forest (filled) and the anomaly detector trained on normal traffic only (outlined).</p>
+    <div class="slider"><label for="fp">normal traffic flagged</label><input type="range" id="fp" min="0" max="7" step="1" value="4"><span class="val" id="fp-v"></span></div>
+    <svg id="v2-svg" viewBox="0 0 720 330" role="img" aria-label="Recall by attack type at the chosen alert rate, for the forest and the anomaly detector."></svg>
+    <div class="readout" id="v2-out"></div>
+  </div>
+
+  <p>The usual advice for attacks nobody has labelled is an <dfn tabindex="0" data-def="A model trained only on normal traffic that flags whatever looks unusual, without needing examples of attacks.">anomaly detector</dfn>.  Here it did better than the forest only on the botnet traffic, and neither caught SSH password guessing at any budget a team could review.  For this data, labelling a few examples beat both threshold tuning and the anomaly detector.</p>
+
+  <!-- ============================================================= -->
+  <h2>What holds generally, and what is specific to this data</h2>
+
+  <p>Three lessons hold for any detector.  Cross-validation inside one data set says little about new kinds of events, so a detector needs a test set made of event types it never saw.  A threshold is a decision about alert volume, and it should be stated as alerts per day.  And identifiers such as addresses and timestamps have to be removed before training, or the model learns the data set instead of the problem.</p>
+
+  <p>The sizes are specific to this data: the 99.97% F1, the recall for each attack type, and the 530,000 flows a day.</p>
+
+  <h2>Where else this applies</h2>
+
+  <p>The same evaluation applies to fraud detection, equipment fault detection, spam and content moderation, and quality inspection, anywhere a detector meets new kinds of events after it is deployed.</p>
+
+  <!-- ============================================================= -->
+  <details class="tech">
+    <summary>Details for technical readers</summary>
+    <p><strong>Data.</strong>  CIC-IDS2017 (Sharafaldin, Lashkari, and Ghorbani, ICISSP 2018), the labelled flow CSVs for Monday (normal only), Tuesday, Thursday morning, and the three Friday captures.  Up to 120,000 normal and 60,000 attack flows were sampled per file.  Dropped: flow ID, source and destination IP and port, timestamp.  The remaining 78 features get a signed log transform, since they span nine orders of magnitude.</p>
+    <p><strong>Models.</strong>  Random forest with 120 trees and a minimum of 2 samples per leaf, trained on the Friday afternoon denial-of-service capture.  Isolation forest with 200 trees, fitted on half of Monday’s normal traffic, with thresholds set on the other half.  For the forest, each alert budget uses the lowest threshold whose actual rate on normal traffic from the test days stays within the budget, because many normal flows score exactly 0.</p>
+    <p><strong>Labelled examples.</strong>  For each attack type with at least 600 flows, 100 randomly chosen flows are added to the training set and the rest are the test set.  SQL injection had only 21 flows, too few to test this way.</p>
+  </details>
+
+  <div class="cta">
+    <p>Have a detector, filter, or alert system that tests well and still misses things?  Email <a href="mailto:joseph.park@wassaw.io">joseph.park@wassaw.io</a> with a description of the problem and, if you can, a sample of the data.  I will tell you whether it is a few hours of work or a few weeks.</p>
+  </div>
+
+  <p class="back"><a href="/work/">All work</a></p>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <a href="mailto:joseph.park@wassaw.io">joseph.park@wassaw.io</a> &nbsp;·&nbsp; Tampa, Florida
+  </div>
+</footer>
+
+<script src="/chart.js"></script>
+<script>
+const D = {"fpr":[0.0001,0.0003,0.001,0.003,0.01,0.02,0.05,0.1],"rfFpr":[9e-05,0.000299,0.000997,0.002993,0.009685,0.019861,0.04968,0.074031],"flows":529918,"cv":{"f1":0.9997249385252122,"recall":0.9995333333333333,"precision":0.9999166347042714},"defFpr":0.0001575162968784078,"fsFpr":0.000182,"att":[{"name":"port scan","n":60000,"rf0":0.0003,"rf":[0.0003,0.0005,0.0033,0.1415,0.9334,0.9936,0.9997,0.9997],"iso":[0.0,0.0,0.0,0.0009,0.0018,0.0076,0.5139,0.9999],"fs":0.9905},{"name":"FTP password guessing","n":7938,"rf0":0.0,"rf":[0.0,0.0,0.0016,0.0447,0.5777,0.6552,0.8404,0.8404],"iso":[0.0,0.0,0.0,0.0,0.0,0.0,0.5025,0.8075],"fs":0.9929},{"name":"SSH password guessing","n":5897,"rf0":0.0,"rf":[0.0,0.0,0.0,0.0008,0.0017,0.0022,0.0063,0.0063],"iso":[0.0,0.0,0.0,0.0,0.0,0.0029,0.0044,0.0081],"fs":0.8427},{"name":"web login brute force","n":1507,"rf0":0.0,"rf":[0.0,0.0,0.0,0.0,0.0,0.8029,0.8062,0.8062],"iso":[0.0,0.0,0.0,0.0,0.0,0.0464,0.0478,0.2077],"fs":0.7861},{"name":"cross-site scripting","n":652,"rf0":0.0,"rf":[0.0,0.0,0.0,0.0,0.023,0.9402,0.9525,0.9525],"iso":[0.0,0.0,0.0,0.0,0.0031,0.0245,0.0245,0.1718],"fs":0.9312},{"name":"SQL injection","n":21,"rf0":0.0,"rf":[0.0,0.0,0.0,0.0,0.0,0.0,0.0952,0.0952],"iso":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"fs":null},{"name":"botnet traffic","n":1966,"rf0":0.0,"rf":[0.0,0.0,0.001,0.0046,0.0071,0.0158,0.0819,0.1536],"iso":[0.0,0.0,0.0,0.0041,0.0173,0.2711,0.2716,0.2721],"fs":0.3767}]};
+const $ = id => document.getElementById(id);
+const pctTxt = v => v >= 0.995 ? "99%+" : v < 0.001 && v > 0 ? "<0.1%" : V.pct(v);
+
+function bars(svg, rows, W, H, draw) {
+  const m = { l: 170, r: 50, t: 30, b: 30 }, x = V.scale(0, 1, m.l, W - m.r);
+  const rowH = (H - m.t - m.b) / rows.length;
+  [0, 0.25, 0.5, 0.75, 1].forEach(v => {
+    svg.appendChild(V.el("line", { class: "gridline", x1: x(v), x2: x(v), y1: m.t, y2: H - m.b }));
+    svg.appendChild(V.el("text", { class: "axis-text", x: x(v), y: H - m.b + 18, "text-anchor": "middle" }, V.pct(v)));
+  });
+  rows.forEach((r, i) => {
+    const y0 = m.t + i * rowH;
+    svg.appendChild(V.el("text", { class: "axis-text", x: m.l - 10, y: y0 + rowH / 2 + 4, "text-anchor": "end" }, r.name));
+    draw(r, y0, rowH, x);
+  });
+}
+
+/* ---------- v1: default threshold against 100 labelled examples ---------- */
+(() => {
+  const svg = $("v1-svg"), W = 720, H = 330;
+  bars(svg, D.att, W, H, (r, y0, h, x) => {
+    const bh = h * 0.32;
+    svg.appendChild(V.el("rect", { x: x(0), y: y0 + h * 0.14, width: Math.max(1, x(r.rf0) - x(0)), height: bh, fill: "#7f888f" }));
+    svg.appendChild(V.el("text", { class: "mark-label", x: x(r.rf0) + 6, y: y0 + h * 0.14 + bh - 2, fill: "#99a3ab" }, pctTxt(r.rf0)));
+    if (r.fs === null) {
+      svg.appendChild(V.el("text", { class: "mark-label", x: x(0) + 6, y: y0 + h * 0.52 + bh - 2, fill: "#99a3ab" }, "too few examples to test"));
+    } else {
+      svg.appendChild(V.el("rect", { x: x(0), y: y0 + h * 0.52, width: x(r.fs) - x(0), height: bh, fill: "var(--s1)" }));
+      svg.appendChild(V.el("text", { class: "mark-label", x: x(r.fs) + 6, y: y0 + h * 0.52 + bh - 2, fill: "#e9ecef" }, pctTxt(r.fs)));
+    }
+  });
+  svg.appendChild(V.el("rect", { x: 170, y: 4, width: 10, height: 10, fill: "#7f888f" }));
+  svg.appendChild(V.el("text", { class: "mark-label", x: 186, y: 13, fill: "#99a3ab" }, "trained on DoS only"));
+  svg.appendChild(V.el("rect", { x: 420, y: 4, width: 10, height: 10, fill: "var(--s1)" }));
+  svg.appendChild(V.el("text", { class: "mark-label", x: 436, y: 13, fill: "#99a3ab" }, "plus 100 labelled examples"));
+  V.table($("v1-table"), ["Attack type", "Flows", "Caught, DoS only", "Caught, plus 100 examples"],
+    D.att.map(r => [r.name, r.n.toLocaleString("en-US"), pctTxt(r.rf0), r.fs === null ? "n/a" : pctTxt(r.fs)]));
+})();
+
+/* ---------- v2: alert budget ---------- */
+(() => {
+  const svg = $("v2-svg"), W = 720, H = 330;
+  function draw() {
+    const i = +$("fp").value, f = D.rfFpr[i];
+    $("fp-v").textContent = (D.fpr[i] * 100).toFixed(D.fpr[i] < 0.001 ? 2 : D.fpr[i] < 0.01 ? 1 : 0) + "%";
+    svg.textContent = "";
+    bars(svg, D.att, W, H, (r, y0, h, x) => {
+      const bh = h * 0.3;
+      svg.appendChild(V.el("rect", { x: x(0), y: y0 + h * 0.16, width: Math.max(1, x(r.rf[i]) - x(0)), height: bh, fill: "var(--s1)" }));
+      svg.appendChild(V.el("rect", { x: x(0), y: y0 + h * 0.52, width: Math.max(1, x(r.iso[i]) - x(0)), height: bh, fill: "none", stroke: "#c98500" }));
+      svg.appendChild(V.el("text", { class: "mark-label", x: Math.max(x(r.rf[i]), x(r.iso[i])) + 6, y: y0 + h * 0.5 + 4, fill: "#e9ecef" },
+        pctTxt(r.rf[i]) + " / " + pctTxt(r.iso[i])));
+    });
+    svg.appendChild(V.el("rect", { x: 170, y: 4, width: 10, height: 10, fill: "var(--s1)" }));
+    svg.appendChild(V.el("text", { class: "mark-label", x: 186, y: 13, fill: "#99a3ab" }, "forest, threshold lowered"));
+    svg.appendChild(V.el("rect", { x: 420, y: 4, width: 10, height: 10, fill: "none", stroke: "#c98500" }));
+    svg.appendChild(V.el("text", { class: "mark-label", x: 436, y: 13, fill: "#99a3ab" }, "anomaly detector"));
+    V.readout($("v2-out"), [
+      ["Alerts a day from normal traffic", Math.round(f * D.flows).toLocaleString("en-US")],
+      ["Default threshold, for comparison", Math.round(D.defFpr * D.flows) + " <small>a day</small>"],
+      ["With 100 labelled examples", "about " + Math.round(D.fsFpr * D.flows) + " <small>a day</small>"]
+    ]);
+  }
+  $("fp").addEventListener("input", draw);
+  draw();
+})();
+</script>
+</body>
+</html>

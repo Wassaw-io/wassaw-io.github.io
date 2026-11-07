@@ -3,10 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Who to call — Joseph Park</title>
+<title>Who to call · Joseph Park</title>
 <meta name="description" content="Targeting a retention programme by churn probability is worse than random. Uplift modelling, a Qini curve you can read, and the intervention cost where targeting starts to pay.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Calling the customers most likely to leave is worse than calling at random">
+<meta property="og:description" content="Uplift modelling on a randomized trial: ranking retention calls by churn risk did worse than random, and the intervention cost where targeting starts to pay.">
+<meta property="og:image" content="https://wassaw.io/work/who-to-call/og.png">
+<meta property="og:url" content="https://wassaw.io/work/who-to-call/">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0e10'/%3E%3Ctext x='16' y='23' font-size='20' fill='%238ec7c1' text-anchor='middle' font-family='serif'%3E%E2%88%AB%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/viz.css">
 <style>
 .viz { --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
   background:#14171a; border:1px solid var(--border); padding:22px 20px 16px; margin:28px 0; }
@@ -54,7 +61,7 @@ details.tablefall summary { font-family:var(--mono); font-size:11.5px; color:var
 
 <main class="wrap">
 
-  <p class="label">Case study</p>
+  <p class="label">Case study · Data science</p>
   <h1>Calling the students most likely to leave is worse than calling at random</h1>
 
   <p class="lede">Every retention programme I have seen ranks customers by how likely
@@ -62,9 +69,33 @@ details.tablefall summary { font-family:var(--mono); font-size:11.5px; color:var
   than picking names out of a hat, and the reason is a distinction most dashboards
   cannot express.</p>
 
-  <p class="note"><strong>The data on this page is artificial</strong>, for privacy.
+  <div class="summary">
+    <p><span class="k">Problem</span><span class="v">Which students to call to keep them from leaving, with a limited call budget.</span></p>
+    <p><span class="k">What I did</span><span class="v">Used a randomized trial to estimate how much a call changes each student’s chance of staying, compared three uplift models against ranking by churn risk, and found the cost per contact at which targeting starts to pay.</span></p>
+    <p><span class="k">Decision</span><span class="v">Stop ranking calls by churn risk, which did worse than random here.  For a cheap call, call everyone and improve the call.  Use the uplift model once the intervention costs more, such as an offer or a free month.</span></p>
+  </div>
+  <ul class="skills">
+    <li>Causal inference</li><li>Uplift modeling</li><li>Randomized experiments</li><li>S-, T-, and X-learners</li><li>Qini curves</li><li>Cost-benefit analysis</li><li>Python</li><li>scikit-learn</li>
+  </ul>
+
+  <p class="notice"><strong>The data on this page is artificial</strong>, for privacy.
   The method is the one I would run against real records. Code:
   <a href="https://github.com/Wassaw-io/tutoring-center-analytics/blob/main/UPLIFT.md">UPLIFT.md</a>.</p>
+
+  <h2>A standard approach against this analysis</h2>
+
+  <div class="compare">
+    <div>
+      <p class="k">A standard approach</p>
+      <p>Ranks customers by how likely they are to leave and calls down the list.</p>
+    </div>
+    <div class="ours">
+      <p class="k">This analysis</p>
+      <p>Estimates the difference a call makes for each customer, using a randomized trial.  On this data the risk-ranked list did worse than calling at random (Qini −17.5 against +33.2 for the uplift model), because the highest-risk students were past the point a call could help.</p>
+    </div>
+  </div>
+
+  <p>When the simple method is enough: at $18 a call and about $1,276 per saved student, calling everyone is hard to beat, and the cost slider below shows it.  Targeting pays once the intervention is expensive.</p>
 
   <h2>Four kinds of customer</h2>
 
@@ -96,7 +127,7 @@ details.tablefall summary { font-family:var(--mono); font-size:11.5px; color:var
 
   <h2>Reading a Qini curve</h2>
 
-  <p>The Qini curve answers one question: if I call the top <em>k</em> percent by this
+  <p>The <dfn tabindex="0" data-def="A curve showing how many extra customers are kept by contacting the top share of a ranked list, beyond what the untreated group did on its own.">Qini curve</dfn> answers one question: if I call the top <em>k</em> percent by this
   score, how many extra students do I keep, over and above what the untreated control
   group did on its own? The diagonal is what random targeting achieves. Anything
   below the diagonal is worse than not thinking at all.</p>
@@ -105,7 +136,7 @@ details.tablefall summary { font-family:var(--mono); font-size:11.5px; color:var
     <h3>Incremental students retained, by how deep you call</h3>
     <p class="sub">Randomised trial, 6,000 students, half called. Hover to read any depth.</p>
     <svg id="v1-svg" viewBox="0 0 720 350" role="img"
-         aria-label="Qini curves. The uplift models rise well above the random-targeting diagonal; the churn-risk model falls below it."></svg>
+         aria-label="Qini curves. The uplift models rise well above the random-targeting diagonal, and the churn-risk model falls below it."></svg>
     <div class="readout" id="v1-out"></div>
     <details class="tablefall">
       <summary>Table view</summary>
@@ -157,11 +188,28 @@ details.tablefall summary { font-family:var(--mono); font-size:11.5px; color:var
   sits once you put your real numbers in.</p>
 
   <p>And none of this exists without a holdout. Randomisation is what makes the
-  effect measurable at all; without it the students a director chooses to call are
+  effect measurable at all.  Without it, the students a director chooses to call are
   exactly the students whose outcomes differ for other reasons. Withholding the call
   from a random third of eligible students for one term converts an entire retention
   budget from an article of faith into a measured quantity, and it costs a third of a
   term's calls.</p>
+
+  <!-- ============================================================= -->
+  <h2>What holds generally, and what is specific to this data</h2>
+
+  <p>The main lesson holds generally: the chance that a customer leaves and the effect an intervention has on them are different quantities, so ranking by one does not rank by the other.  Measuring the effect needs a randomized holdout.  The crossover where targeting pays depends only on the cost per contact against the value of a save, so any business can locate its own.</p>
+
+  <p>The sizes are specific to this data: the two Qini values, the thirteen-fold return at 20% depth, and the $18 and $1,276 figures.</p>
+
+  <h2>Where else this applies</h2>
+
+  <p>The same approach applies to discounts and promotions, win-back campaigns, sales outreach, patient reminder programs, and fundraising appeals.  It matters most when an intervention costs real money or can backfire.</p>
+
+  <div class="cta">
+    <p>Running a retention, discount, or outreach program and not sure who it is reaching?  Email <a href="mailto:joseph.park@wassaw.io">joseph.park@wassaw.io</a> with a description of the problem and, if you can, a sample of the data.  I will tell you whether it is a few hours of work or a few weeks.</p>
+  </div>
+
+  <p class="back"><a href="/work/">All work</a></p>
 
 </main>
 
