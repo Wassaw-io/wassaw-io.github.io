@@ -25,38 +25,43 @@
 
   <!-- ============ HERO ============ -->
   <p class="label">Work</p>
-  <h1>Small, well-defined pieces of machine learning and data work, finished.</h1>
+  <h1>Data science, machine learning, and AI engineering, scoped and finished.</h1>
 
-  <p class="lede">I take contract work in data analysis, forecasting, and AI systems. I am most useful on the jobs that are genuinely hard rather than merely long: the dataset nobody can get into a usable shape, the model that fits the training set and nothing else, the pipeline that works until the data changes.</p>
+  <p class="lede">I take contract work, and I am looking for a full-time role in any of these three areas.  Each project below ends on a decision rather than a summary, and the code is public.</p>
 
-  <!-- ============ WHAT ============ -->
-  <h2>What I take on</h2>
+  <!-- ============ SERVICES ============ -->
+  <h2>Services</h2>
 
   <div class="subjects">
 
     <div class="group">
-      <p class="k">Data cleaning and analysis</p>
-      <p class="v">Messy, nonstandard, or partly broken data turned into something you can compute on. Exploratory analysis with an actual conclusion at the end rather than a wall of plots.</p>
+      <p class="k">Analysis with a decision at the end</p>
+      <p class="v">You send a dataset and the question you need answered.  You get a short report that answers it, the charts, and the code, with the limits of the data stated plainly.  Messy or partly broken data is fine.</p>
     </div>
 
     <div class="group">
-      <p class="k">Forecasting and time series</p>
-      <p class="v">Regression, time series analysis, and forecasting, including data with gaps, sensor drift, and structure the standard methods assume away.</p>
+      <p class="k">Forecasting</p>
+      <p class="v">Demand, sales, or staffing forecasts with intervals, backtested against simple baselines so you know the model earns its complexity.  Data with gaps, drift, and seasonality included.</p>
     </div>
 
     <div class="group">
-      <p class="k">Machine learning</p>
-      <p class="v">Model selection, training, evaluation that means something, and deployment. Classical methods where they win, which is more often than the current mood suggests.</p>
+      <p class="k">Predictive models</p>
+      <p class="v">Models built, evaluated on data they have not seen, and deployed with input checks and monitoring.  Classical methods where they win, which is more often than the current mood suggests.</p>
     </div>
 
     <div class="group">
-      <p class="k">Retrieval and agent systems</p>
-      <p class="v">RAG over your own documents, multi-agent workflows, hierarchical routing, and automation with n8n. Built so you can run it without me afterward.</p>
+      <p class="k">Model and pipeline audits</p>
+      <p class="v">Why a model looks good in testing and fails in use: leakage, drift, the wrong metric, or a split that puts the same customer on both sides.  You get the cause, the fix, and a test that catches it next time.</p>
+    </div>
+
+    <div class="group">
+      <p class="k">LLM features and agents</p>
+      <p class="v">Retrieval over your own documents, agents and automation (including n8n), and prompt testing, each with an evaluation set so you know whether it works before your customers find out.</p>
     </div>
 
     <div class="group">
       <p class="k">Handover</p>
-      <p class="v">I train the people who will own the work after I leave. This is the part most contractors skip, and it is why a system stops getting used three months later.</p>
+      <p class="v">I train the people who will own the work after I leave.  This is the part most contractors skip, and it is why a system stops getting used three months later.</p>
     </div>
 
   </div>
@@ -69,28 +74,45 @@
       <h3>The churn rate is the wrong number</h3>
       <p>Survival analysis on student retention, a frailty model for why the churn
       rate falls when nothing about any student changes, and lifetime value
-      recomputed off the survival curve. Sliders move the assumptions and the
+      recomputed off the survival curve.  Sliders move the assumptions and the
       decision flips.</p>
     </a>
     <a class="card" href="/work/who-to-call/">
       <h3>Who to call is not who will leave</h3>
       <p>Targeting retention outreach by churn probability performs worse than
-      random. Uplift modelling on a randomised trial, a Qini curve you can read at
+      random.  Uplift modelling on a randomised trial, a Qini curve you can read at
       any depth, and the intervention cost where targeting starts to pay.</p>
     </a>
   </div>
 
-  <p>Both come out of one repository that works the problem end to end: acquisition
-  and funnel, survival and lifetime value, a discrete-time hazard model, causal
-  uplift, seasonal decomposition and forecasting, hierarchical pooling across
-  centers, drift monitoring, and retrieval evaluation. Eight write-ups, 38 tests, and
-  a command-line tool that validates its input before it predicts.</p>
+  <!-- ============ BY ROLE ============ -->
+  <h2>Projects by role</h2>
 
-  <p class="note">The data throughout is artificial, for privacy. The analyses are
-  the ones I ran against the real records. Code:
-  <a href="https://github.com/Wassaw-io/tutoring-center-analytics">github.com/Wassaw-io/tutoring-center-analytics</a>.</p>
+  <p>All of these come from one engagement with a tutoring center, worked end to end.  Client names and real figures are withheld, and the published numbers come from artificial data generated to match the real analysis.</p>
 
-  <!-- ============ EVIDENCE ============ -->
+  <h3 class="label" id="data-science">Data science</h3>
+  <ul class="facts">
+    <li><span class="k">Survival</span><span class="v">How long customers stay, and what each one is worth.  <a href="/work/tutoring-retention/">Case study</a>.</span></li>
+    <li><span class="k">Causal</span><span class="v">Uplift modelling on a randomised trial, and when targeting pays.  <a href="/work/who-to-call/">Case study</a>.</span></li>
+    <li><span class="k">Forecasting</span><span class="v">Seasonal decomposition that checks the headline result, a SARIMA forecast backtested from 22 starting points, and staffing to the top of the interval.  <a href="https://github.com/Wassaw-io/tutoring-center-analytics/blob/main/FORECASTING.md">Write-up</a>.</span></li>
+    <li><span class="k">Bayesian</span><span class="v">Partial pooling across fourteen centers, which showed that none could be called worse than average at 90% confidence.  <a href="https://github.com/Wassaw-io/tutoring-center-analytics/blob/main/HIERARCHICAL.md">Write-up</a>.</span></li>
+  </ul>
+
+  <h3 class="label" id="ml-engineering">Machine learning engineering</h3>
+  <ul class="facts">
+    <li><span class="k">Modelling</span><span class="v">Gradient boosting against logistic regression, split by customer rather than by row, and the computed ceiling on what any model could reach.  <a href="https://github.com/Wassaw-io/tutoring-center-analytics/blob/main/MODELING.md">Write-up</a>.</span></li>
+    <li><span class="k">Monitoring</span><span class="v">Drift detection that tells feature drift from concept drift, and a command-line tool that exits non-zero when retraining is due.  <a href="https://github.com/Wassaw-io/tutoring-center-analytics/blob/main/MONITORING.md">Write-up</a>.</span></li>
+  </ul>
+
+  <h3 class="label" id="ai-engineering">AI engineering</h3>
+  <ul class="facts">
+    <li><span class="k">Retrieval</span><span class="v">BM25, TF-IDF, dense, and hybrid retrieval compared on hand-labelled queries, with a bootstrap interval showing which differences are real, and chunk size mattering more than the retriever.  <a href="https://github.com/Wassaw-io/tutoring-center-analytics/blob/main/RETRIEVAL.md">Write-up</a>.</span></li>
+  </ul>
+
+  <p class="note">Code for all of it: <a href="https://github.com/Wassaw-io/tutoring-center-analytics">github.com/Wassaw-io/tutoring-center-analytics</a>.</p>
+
+  
+<!-- ============ EVIDENCE ============ -->
   <h2>One more example</h2>
 
   <p>At NASA Wallops Flight Facility I was forecasting local air temperature and modeling the dependence of lightning frequency on local climate change, working in R on data that did not behave the way the textbooks assume. Working through the residuals turned up something that was not a modeling problem at all: a NOAA sensor was malfunctioning. The forecasting work was published with me as first author, and certain results went into a NASA Technical Memorandum.</p>
@@ -106,6 +128,8 @@
   <h2>Getting started</h2>
 
   <p>Email me a description of the problem and, if you can, a sample of the data. I will tell you honestly whether it is a few hours of work or a few weeks, and whether I am the right person for it. If I am not, I will usually be able to say what kind of person is.</p>
+
+  <p>If you are hiring for a full-time role, the same address works, and I can send a CV.</p>
 
 </main>
 
