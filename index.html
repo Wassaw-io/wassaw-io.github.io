@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Joseph Park — Wassaw</title>
-<meta name="description" content="Joseph Park. Mathematics, physics, and the mathematics underneath machine learning. Johns Hopkins M.S./Doctor of Engineering in Artificial Intelligence.">
+<meta name="description" content="Joseph Park. Data science, machine learning engineering, and AI engineering, for contract work and full-time roles. Johns Hopkins M.S./Doctor of Engineering in Artificial Intelligence.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0e10'/%3E%3Ctext x='16' y='23' font-size='20' fill='%238ec7c1' text-anchor='middle' font-family='serif'%3E%E2%88%AB%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -25,19 +25,68 @@
 
   <!-- ============ HERO ============ -->
   <p class="label">Joseph Park</p>
-  <h1>I work on the mathematics underneath machine learning, and I teach it.</h1>
+  <h1>Data science, machine learning, and AI engineering, from someone with the mathematics to check the results.</h1>
 
-  <p class="lede">Category theory, topological data analysis, and quantum computation, applied to how AI systems represent and move data. That is my doctoral direction. Alongside it I tutor mathematics and physics, and I build things for clients who need the analysis done rather than described.</p>
+  <p class="lede">I build analyses, models, and AI systems that end in a decision someone can act on.  I take contract work, and I am looking for a full-time role as a data scientist, ML engineer, or AI engineer.</p>
 
-  <!-- ============ FACTS ============ -->
+  <!-- ============ RESULTS ============ -->
+  <h2>Results from recent work</h2>
+
+  <ul class="facts">
+    <li>
+      <span class="k">Customer value</span>
+      <span class="v">Recomputed lifetime value from a survival curve instead of the usual churn formula.  Paid search went from clearing the 3:1 return threshold (3.09) to missing it (2.70), with the same customers and the same spend.  <a href="/work/tutoring-retention/">Case study</a>.</span>
+    </li>
+    <li>
+      <span class="k">Targeting</span>
+      <span class="v">Showed that calling the customers most likely to leave did worse than calling at random, and built an uplift model that returned 13 times what the risk-ranked list did at the same depth.  <a href="/work/who-to-call/">Case study</a>.</span>
+    </li>
+    <li>
+      <span class="k">Model choice</span>
+      <span class="v">Gradient boosting lost to logistic regression.  Instead of tuning further, I computed the ceiling: 56% of the signal above chance could not be observed in the data collected, so the recommendation was to collect a different variable.</span>
+    </li>
+    <li>
+      <span class="k">Production</span>
+      <span class="v">A command-line tool that validates its input before it predicts, drift monitoring that needs two of three signals to agree before it calls for retraining, and 38 tests that check results against known answers.</span>
+    </li>
+  </ul>
+
+  <p class="note">Client names and real figures are withheld.  The published numbers come from artificial data generated to match the real analysis.  Code:
+  <a href="https://github.com/Wassaw-io/tutoring-center-analytics">github.com/Wassaw-io/tutoring-center-analytics</a>.</p>
+
+  <!-- ============ ROLES ============ -->
+  <h2>What I do</h2>
+
+  <div class="cards">
+    <a class="card" href="/work/#data-science">
+      <h3>Data science</h3>
+      <p>Analysis, forecasting, experiments, and causal questions, such as whether a campaign or an intervention actually worked.</p>
+    </a>
+    <a class="card" href="/work/#ml-engineering">
+      <h3>Machine learning engineering</h3>
+      <p>Models that are trained, evaluated, deployed, and monitored, including knowing when not to retrain.</p>
+    </a>
+    <a class="card" href="/work/#ai-engineering">
+      <h3>AI engineering</h3>
+      <p>Retrieval, agents, and LLM features, with an evaluation that shows whether they work before they ship.</p>
+    </a>
+    <a class="card" href="/tutoring/">
+      <h3>Tutoring</h3>
+      <p>University mathematics and physics, the mathematics behind machine learning, and test preparation.</p>
+    </a>
+  </div>
+
+  <!-- ============ BACKGROUND ============ -->
+  <h2>Background</h2>
+
   <ul class="facts">
     <li>
       <span class="k">Now</span>
-      <span class="v">Combined M.S. and Doctor of Engineering in Artificial Intelligence, Johns Hopkins University. Graduate certificate in Applied and Computational Mathematics.</span>
+      <span class="v">Combined M.S. and Doctor of Engineering in Artificial Intelligence, Johns Hopkins University.  Graduate certificate in Applied and Computational Mathematics.</span>
     </li>
     <li>
       <span class="k">Research</span>
-      <span class="v">Quantum gravity and noncommutative geometry with Matilde Marcolli at Caltech. Mathematical physics with Sergei Shabanov at the University of Florida. Computational biophysics with Nikolay Dokholyan at UNC Chapel Hill.</span>
+      <span class="v">Quantum gravity and noncommutative geometry with Matilde Marcolli at Caltech.  Mathematical physics with Sergei Shabanov at the University of Florida.  Computational biophysics with Nikolay Dokholyan at UNC Chapel Hill.</span>
     </li>
     <li>
       <span class="k">Published</span>
@@ -45,67 +94,16 @@
     </li>
     <li>
       <span class="k">Degrees</span>
-      <span class="v">B.S. Mathematics and B.A. Physics, both with honors, University of Florida. Graduate coursework in quantum field theory, complex analysis, and numerical linear algebra.</span>
+      <span class="v">B.S. Mathematics and B.A. Physics, both with honors, University of Florida.  Graduate coursework in quantum field theory, complex analysis, and numerical linear algebra.</span>
     </li>
     <li>
       <span class="k">Teaching</span>
-      <span class="v">Tutoring mathematics and physics since 1997. GRE quantitative 169 of 170.</span>
+      <span class="v">Tutoring mathematics and physics since 1997.  GRE quantitative 169 of 170.</span>
     </li>
   </ul>
 
-  <!-- ============ TWO DOORS ============ -->
-  <h2>Two ways to work with me</h2>
-
-  <div class="cards">
-    <a class="card" href="/tutoring/">
-      <h3>Tutoring</h3>
-      <p>University mathematics and physics, the mathematics behind machine learning, graduate qualifying material, and test preparation.</p>
-    </a>
-    <a class="card" href="/work/">
-      <h3>Consulting</h3>
-      <p>Data analysis, forecasting, retrieval and agent systems, and the unglamorous work of getting a messy dataset into a state where a model can use it.</p>
-    </a>
-  </div>
-
-  <!-- ============ EVIDENCE ============ -->
-  <h2>Recent work</h2>
-
-  <p>A marketing and retention analysis for a math tutoring franchise, worked end to
-  end and published with the code. Eight write-ups, each ending on a decision rather
-  than a summary, and each one containing at least one result I did not expect when I
-  started it.</p>
-
-  <ul class="facts">
-    <li>
-      <span class="k">Survival</span>
-      <span class="v">The churn rate falls steeply over time even though no
-      individual student's risk ever changes. Two readings, opposite
-      interventions. <a href="/work/tutoring-retention/">Read it</a>.</span>
-    </li>
-    <li>
-      <span class="k">Causal</span>
-      <span class="v">Targeting retention calls by churn probability turns out to be
-      worse than calling at random. <a href="/work/who-to-call/">Read it</a>.</span>
-    </li>
-    <li>
-      <span class="k">Modelling</span>
-      <span class="v">Gradient boosting lost to logistic regression, and the ceiling
-      is computable: 56% of the signal above chance was unobservable. The
-      recommendation was to stop tuning and collect a different variable.</span>
-    </li>
-    <li>
-      <span class="k">Engineering</span>
-      <span class="v">Drift monitoring, a CLI that validates before it predicts and
-      exits non-zero on a retrain signal, and 38 tests that check claims rather than
-      smoke.</span>
-    </li>
-  </ul>
-
-  <p class="note">Data throughout is artificial, for privacy. The analyses are the
-  ones I ran against real records. Code:
-  <a href="https://github.com/Wassaw-io/tutoring-center-analytics">github.com/Wassaw-io/tutoring-center-analytics</a>.</p>
-
-  <!-- ============ CATENA ============ -->
+  
+<!-- ============ CATENA ============ -->
   <h2>Catena</h2>
 
   <p>Catena is my doctoral research direction: a database whose schema is a category, where the maps between physical systems are typed morphisms that carry what they preserve, and where composing a path through the graph composes the guarantees along with it. The bet is that a good deal of what we currently ask a language model to infer is structure that could be represented exactly instead.</p>
